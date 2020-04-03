@@ -2,27 +2,21 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
+from launch_helpers import get_ws_src_directory, add_namespace_to_yaml, get_ws_src_directory
+
 import os
 
-import xacro
-import tempfile
-
 namespace_ = 'marta'
-
+# Get package src path based on a package name. Make sure the package is installed from source.
+ros2_ws_src = get_ws_src_directory('gamepad_parser')
 
 def generate_launch_description():
 
-    ## Individual Parameter files
-    ## TODO: Config files are installed. Thus they can not be changed without recompiling. Might be better to find the repository instead.
-    gamepad_parser_dir = get_package_share_directory('gamepad_parser')
-    gamepad_parser_config = os.path.join(gamepad_parser_dir, 'gamepad_parser.yaml')
+    # Individual Parameter files
+    gamepad_parser_config = os.path.join(ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
 
-    ## Add namespace to the yaml file
+    # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
-
-    with open(gamepad_parser_config_ns, 'r') as f:
-        print(f.read())
-
 
     # Load XACRO and parse to URDF
     pkg_rover_config = get_package_share_directory('rover_config')
@@ -42,13 +36,6 @@ def generate_launch_description():
                           'source_list': ['/{}/joint_states_sim'.format(namespace_)]}
 
     return LaunchDescription([
-        # Use this or the joint_state_publisher to publish dummy values for joints.
-        # Node(
-        # 	package='tf2_ros',
-        # 	node_executable='static_transform_publisher',
-        # 	node_name='link_back_left_broadcaster',
-        # 	arguments=['0 0 0 0 0 0 0 base_link link_back_left']
-        # ),
         Node(
             package='robot_state_publisher',
             node_namespace=namespace_,
@@ -115,44 +102,4 @@ def generate_launch_description():
             parameters=[(urdf_params)]
         )
     ])
-
-
-def to_urdf(xacro_path, urdf_path=None):
-    """Convert the given xacro file to URDF file.
-    * xacro_path -- the path to the xacro file
-    * urdf_path -- the path to the urdf file
-    """
-    # If no URDF path is given, use a temporary file
-    if urdf_path is None:
-        urdf_path = tempfile.mktemp(prefix="%s_" %
-                                    os.path.basename(xacro_path))
-
-    # open and process file
-    doc = xacro.process_file(xacro_path)
-    # open the output file
-    out = xacro.open_output(urdf_path)
-    out.write(doc.toprettyxml(indent='  '))
-
-    return urdf_path  # Return path to the urdf file
-
-
-
-
-def add_namespace_to_yaml(namespace, yaml_path, ns_yaml_path=None):
-    """Make config files reusable in multiple namespaces by generating a new yaml with a namespace appended
-    * yaml_path -- the path to the yaml file
-    * ns_yaml_path -- the path to the namespaced yaml file
-    """
-    # If no YAML path is given, use a temporary file
-    if ns_yaml_path is None:
-        ns_yaml_path = tempfile.mktemp(prefix="%s_" %
-                                    os.path.basename(yaml_path))
-
-    # open and process file
-    with open(yaml_path, 'r') as yaml_file, open(ns_yaml_path, 'w') as ns_yaml_file:
-        ns_yaml_file.write('# Temporary Namespace\n')     
-        ns_yaml_file.write(namespace + ':\n')     
-        for line in yaml_file:
-            ns_yaml_file.write("  " + line)
-    return ns_yaml_path  # Return path to the urdf file
 
