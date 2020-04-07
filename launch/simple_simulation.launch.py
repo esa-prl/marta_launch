@@ -2,7 +2,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
-from launch_helpers import get_ws_src_directory, add_namespace_to_yaml, get_ws_src_directory
+from launch_helpers import get_ws_src_directory, add_namespace_to_yaml, to_urdf
 
 import os
 
@@ -14,9 +14,11 @@ def generate_launch_description():
 
     # Individual Parameter files
     gamepad_parser_config = os.path.join(ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
+    locomotion_manager_config = os.path.join(ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
 
     # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
+    locomotion_manager_config_ns = add_namespace_to_yaml(namespace_, locomotion_manager_config)
 
     # Load XACRO and parse to URDF
     pkg_rover_config = get_package_share_directory('rover_config')
@@ -84,14 +86,14 @@ def generate_launch_description():
             emulate_tty=True
         ),
         Node(
-            package='simple_joint_simulation',
+            package='locomotion_manager',
             node_namespace=namespace_,
-            node_executable='simple_joint_simulation_node',
-            node_name='simple_joint_simulation_node',
+            node_executable='locomotion_manager_node',
+            node_name='locomotion_manager_node',
             output='screen',
+            parameters=[locomotion_manager_config_ns],
             emulate_tty=True
         ),
-
         Node(
             package='simple_rover_locomotion',
             node_namespace=namespace_,
@@ -100,6 +102,14 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             parameters=[(urdf_params)]
+        ),
+        Node(
+            package='simple_joint_simulation',
+            node_namespace=namespace_,
+            node_executable='simple_joint_simulation_node',
+            node_name='simple_joint_simulation_node',
+            output='screen',
+            emulate_tty=True
         )
     ])
 
