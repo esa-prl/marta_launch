@@ -12,14 +12,7 @@ ros2_ws_src = get_ws_src_directory('gamepad_parser')
 
 def generate_launch_description():
 
-    # Individual Parameter files
-    gamepad_parser_config = os.path.join(ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
-    locomotion_manager_config = os.path.join(ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
-
-    # Add namespace to the yaml file
-    gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
-    locomotion_manager_config_ns = add_namespace_to_yaml(namespace_, locomotion_manager_config)
-
+    ## ROBOT MODEL
     # Load XACRO and parse to URDF
     pkg_rover_config = get_package_share_directory('rover_config')
     xacro_model_name = "marta.xacro"
@@ -28,6 +21,17 @@ def generate_launch_description():
     # Parse XACRO file to URDF
     urdf_model_path = to_urdf(xacro_model_path)
     urdf_params = {'urdf_model_path': urdf_model_path}
+
+    ## PARAMETERS
+    # Individual Parameter files
+    gamepad_parser_config = os.path.join(ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
+    locomotion_manager_config = os.path.join(ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
+    simple_rover_locomotion_config = os.path.join(ros2_ws_src, 'simple_rover_locomotion', 'config', 'robot_poses.yaml')
+
+    # Add namespace to the yaml file
+    gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
+    locomotion_manager_config_ns = add_namespace_to_yaml(namespace_, locomotion_manager_config)
+    simple_rover_locomotion_config_ns = add_namespace_to_yaml(namespace_, simple_rover_locomotion_config)
 
     # Parameters for the joint_state_publisher
     joint_state_params = {'use_gui': True,
@@ -101,7 +105,9 @@ def generate_launch_description():
             node_name='simple_rover_locomotion_node',
             output='screen',
             emulate_tty=True,
-            parameters=[(urdf_params)]
+            # Parameters can be passed as dict or path to the .yaml
+            parameters=[urdf_params, simple_rover_locomotion_config_ns]
+            # parameters=[simple_rover_locomotion_config_ns]
         ),
         Node(
             package='simple_joint_simulation',
