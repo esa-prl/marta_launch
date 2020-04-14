@@ -27,11 +27,13 @@ def generate_launch_description():
     gamepad_parser_config = os.path.join(ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
     locomotion_manager_config = os.path.join(ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
     simple_rover_locomotion_config = os.path.join(ros2_ws_src, 'simple_rover_locomotion', 'config', 'robot_poses.yaml')
+    stop_mode_config = os.path.join(ros2_ws_src, 'locomotion_mode', 'config', 'stop_mode.yaml')
 
     # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
     locomotion_manager_config_ns = add_namespace_to_yaml(namespace_, locomotion_manager_config)
     simple_rover_locomotion_config_ns = add_namespace_to_yaml(namespace_, simple_rover_locomotion_config)
+    stop_mode_config_ns = add_namespace_to_yaml(namespace_, stop_mode_config)
 
     # Parameters for the joint_state_publisher
     joint_state_params = {'use_gui': True,
@@ -107,7 +109,16 @@ def generate_launch_description():
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
             parameters=[urdf_params, simple_rover_locomotion_config_ns]
-            # parameters=[simple_rover_locomotion_config_ns]
+        ),
+        Node(
+            package='locomotion_mode',
+            node_namespace=namespace_,
+            node_executable='stop_mode_node',
+            node_name='stop_mode_node',
+            output='screen',
+            emulate_tty=True,
+            # Parameters can be passed as dict or path to the .yaml
+            parameters=[urdf_params, stop_mode_config_ns]
         ),
         Node(
             package='simple_joint_simulation',
