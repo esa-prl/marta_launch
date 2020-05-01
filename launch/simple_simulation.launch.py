@@ -10,9 +10,10 @@ namespace_ = 'marta'
 # Get package src path based on a package name. Make sure the package is installed from source.
 ros2_ws_src = get_ws_src_directory('gamepad_parser')
 
+
 def generate_launch_description():
 
-    ## ROBOT MODEL
+    # ## ROBOT MODEL
     # Load XACRO and parse to URDF
     pkg_rover_config = get_package_share_directory('rover_config')
     xacro_model_name = "marta.xacro"
@@ -22,17 +23,21 @@ def generate_launch_description():
     urdf_model_path = to_urdf(xacro_model_path)
     urdf_params = {'urdf_model_path': urdf_model_path}
 
-    ## PARAMETERS
+    # ## PARAMETERS
     # Individual Parameter files
-    gamepad_parser_config = os.path.join(ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
-    locomotion_manager_config = os.path.join(ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
-    simple_rover_locomotion_config = os.path.join(ros2_ws_src, 'simple_rover_locomotion', 'config', 'robot_poses.yaml')
+    gamepad_parser_config = os.path.join(
+        ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
+    locomotion_manager_config = os.path.join(
+        ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
+    simple_rover_locomotion_config = os.path.join(
+        ros2_ws_src, 'simple_rover_locomotion', 'config', 'robot_poses.yaml')
     stop_mode_config = os.path.join(ros2_ws_src, 'locomotion_mode', 'config', 'stop_mode.yaml')
 
     # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
     locomotion_manager_config_ns = add_namespace_to_yaml(namespace_, locomotion_manager_config)
-    simple_rover_locomotion_config_ns = add_namespace_to_yaml(namespace_, simple_rover_locomotion_config)
+    simple_rover_locomotion_config_ns = add_namespace_to_yaml(
+        namespace_, simple_rover_locomotion_config)
     stop_mode_config_ns = add_namespace_to_yaml(namespace_, stop_mode_config)
 
     # Parameters for the joint_state_publisher
@@ -129,4 +134,3 @@ def generate_launch_description():
             emulate_tty=True
         )
     ])
-

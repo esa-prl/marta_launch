@@ -36,9 +36,6 @@ def generate_launch_description():
     stop_mode_config = os.path.join(
         ros2_ws_src, 'locomotion_mode', 'config', 'stop_mode.yaml')
 
-
-
-
     # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(
         namespace_, gamepad_parser_config)
@@ -55,8 +52,6 @@ def generate_launch_description():
     urdf_model = to_urdf(xacro_model)
     urdf_params = {'urdf_model_path': urdf_model}
 
-    rviz_model = os.path.join(pkg_rover_config, 'rviz', 'rover_gazebo.rviz')
-
     # Spawn rover
     spawn_rover = Node(
         package='gazebo_ros',
@@ -72,7 +67,8 @@ def generate_launch_description():
                    '-reference_frame', 'world']
     )
 
-    # Launch robot_state_publisher to publish the robot description and convert joint_states to tf messages
+    # Launch robot_state_publisher to publish the robot description
+    # and convert joint_states to tf messages
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         node_namespace=namespace_,

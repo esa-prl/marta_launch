@@ -21,8 +21,6 @@ def generate_launch_description():
     urdf_model_path = to_urdf(xacro_model_path)
     urdf_params = {'urdf_model_path': urdf_model_path}
 
-    tf_params = {'robot_description': urdf_model_path}
-
     gui_params = {'use_gui': True,
                   'rate':	 50,
                   'publish_default_velocities': True,
