@@ -53,9 +53,9 @@ Run any of the provided launch files with:
 
 * **dummy_control.launch.py:**  
 
-* **simple_simulation.launch.py** Launches all nodes to control the robot via gamepad
+* **simple_simulation.launch.py** Launches all nodes to control a visualization of the robot in RVIZ2.
 
-* **simulation_control.launch.py** Launches a simulation in Gazebo and the nodes to control it via gamepad
+* **simulation_control.launch.py** Launches a simulation of the rover in Gazebo and the nodes to control it via gamepad.
 
 
 ## Bugs & Feature Requests
