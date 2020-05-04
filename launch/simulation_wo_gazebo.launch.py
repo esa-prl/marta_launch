@@ -1,16 +1,12 @@
 """Launch the rover_simulation node"""
 import os
-
 from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-
-from launch_helpers import add_namespace_to_yaml, get_ws_src_directory, to_urdf
-
+from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_helpers import get_ws_src_directory, add_namespace_to_yaml, to_urdf
 
 namespace_ = 'marta'
 
@@ -24,11 +20,11 @@ def generate_launch_description():
 
     # Gazebo launch
     # Starts the gzserver (handles computations) and gzclient (handles visualization)
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
-        )
-    )
+    # gazebo = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
+    #     )
+    # )
 
     # Individual Parameter files
     gamepad_parser_config = os.path.join(
@@ -39,6 +35,9 @@ def generate_launch_description():
         ros2_ws_src, 'simple_rover_locomotion', 'config', 'robot_poses.yaml')
     stop_mode_config = os.path.join(
         ros2_ws_src, 'locomotion_mode', 'config', 'stop_mode.yaml')
+
+
+
 
     # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(
@@ -56,6 +55,8 @@ def generate_launch_description():
     urdf_model = to_urdf(xacro_model)
     urdf_params = {'urdf_model_path': urdf_model}
 
+    rviz_model = os.path.join(pkg_rover_config, 'rviz', 'rover_gazebo.rviz')
+
     # Spawn rover
     spawn_rover = Node(
         package='gazebo_ros',
@@ -71,8 +72,7 @@ def generate_launch_description():
                    '-reference_frame', 'world']
     )
 
-    # Launch robot_state_publisher to publish the robot description
-    # and convert joint_states to tf messages
+    # Launch robot_state_publisher to publish the robot description and convert joint_states to tf messages
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         node_namespace=namespace_,
@@ -92,7 +92,7 @@ def generate_launch_description():
                 pkg_gazebo_ros, 'worlds', 'empty.world'), ''],
             description='SDF world file'
         ),
-        gazebo,
+        # gazebo,
         spawn_rover,
         robot_state_publisher_node,
         Node(
