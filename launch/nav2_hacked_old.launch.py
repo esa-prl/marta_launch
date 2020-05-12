@@ -21,7 +21,7 @@ ros2_ws_src = get_ws_src_directory('gamepad_parser')
 def generate_launch_description():
 
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_nav2_bringup = get_package_share_directory('nav2_bringup')
+    pkg_nav2_bringup_dir = get_package_share_directory('nav2_bringup')
 
     # Gazebo launch
     # Starts the gzserver (handles computations) and gzclient (handles visualization)
@@ -33,7 +33,19 @@ def generate_launch_description():
 
     nav2_navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_nav2_bringup, 'launch', 'nav2_navigation_launch.py'),
+            os.path.join(pkg_nav2_bringup_dir, 'launch', 'nav2_navigation_launch.py'),
+        )
+    )
+
+    nav2_localization = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_nav2_bringup_dir, 'launch', 'nav2_localization_launch.py'),
+        )
+    )
+
+    static_rover_in_map_tf_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ros2_ws_src, 'marta_launch', 'launch', 'static_rover_in_map_tf.launch.py'),
         )
     )
 
@@ -92,17 +104,27 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    return LaunchDescription([
+    map_path = os.path.join(pkg_nav2_bringup_dir, 'maps', 'turtlebot3_world.yaml'),
+
+    ld = LaunchDescription([
         DeclareLaunchArgument(
             'world',
             default_value=[os.path.join(
                 pkg_gazebo_ros, 'worlds', 'empty.world'), ''],
             description='SDF world file'
         ),
+        static_rover_in_map_tf_launch,
         gazebo,
-        # nav2_navigation,
+        nav2_navigation,
         spawn_rover,
         robot_state_publisher_node,
+        nav2_localization,
+        # Node(
+        #     package='nav2_map_server',
+        #     node_executable='map_server',
+        #     node_name='map_server',
+        #     output='screen',
+        #     parameters=[{'use_sim_time': True, 'yaml_filename': map_path}]),
         Node(
             package='joy',
             node_namespace=namespace_,
@@ -120,6 +142,7 @@ def generate_launch_description():
             node_executable='gamepad_parser_node',
             node_name='gamepad_parser_node',
             output='screen',
+            remappings=[('/{}/rover_motion_cmd'.format(namespace_), '/cmd_vel')],
             parameters=[gamepad_parser_config_ns],
             emulate_tty=True
         ),
@@ -139,6 +162,7 @@ def generate_launch_description():
             node_name='stop_mode_node',
             output='screen',
             emulate_tty=True,
+            remappings=[('/{}/rover_motion_cmd'.format(namespace_), '/cmd_vel')],
             # Parameters can be passed as dict or path to the .yaml
             parameters=[urdf_params, stop_mode_config_ns]
         ),
@@ -147,9 +171,12 @@ def generate_launch_description():
             node_namespace=namespace_,
             node_executable='simple_rover_locomotion_node',
             node_name='simple_rover_locomotion_node',
+            remappings=[('/{}/rover_motion_cmd'.format(namespace_), '/cmd_vel')],
             output='screen',
             emulate_tty=True,
             parameters=[urdf_params, simple_rover_locomotion_config_ns]
         )
 
     ])
+
+    return ld

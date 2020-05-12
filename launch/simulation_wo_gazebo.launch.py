@@ -36,9 +36,6 @@ def generate_launch_description():
     stop_mode_config = os.path.join(
         ros2_ws_src, 'locomotion_mode', 'config', 'stop_mode.yaml')
 
-
-
-
     # Add namespace to the yaml file
     gamepad_parser_config_ns = add_namespace_to_yaml(
         namespace_, gamepad_parser_config)
