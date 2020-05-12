@@ -62,7 +62,7 @@ def generate_launch_description():
         emulate_tty=True,
         arguments=['-entity',
                    'marta',
-                   '-x', '0', '-y', '0', '-z', '1',
+                   '-x', '-1.5', '-y', '-0.5', '-z', '1',
                    '-file', urdf_model,
                    '-reference_frame', 'world']
     )

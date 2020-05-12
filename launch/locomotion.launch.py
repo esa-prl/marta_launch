@@ -93,18 +93,6 @@ def generate_launch_description():
             parameters=[sim_param],
             emulate_tty=True
         ),
-        # Node(
-        #     package='joint_state_publisher',
-        #     node_namespace=namespace_,
-        #     node_executable='joint_state_publisher',
-        #     remappings=[
-        #             ('/robot_description',
-        #              os.path.join(namespace_, '/robot_description'))
-        #     ],
-        #     node_name='joint_state_publisher_node',
-        #     output='screen',
-        #     parameters=[(joint_state_params), sim_param]
-        # ),
         Node(
             package='joy',
             node_namespace=namespace_,
