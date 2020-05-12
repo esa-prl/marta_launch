@@ -133,6 +133,7 @@ def generate_launch_description():
             remappings=[
                     ('joy', 'gamepad')
             ],
+            parameters=[sim_params],
             output='screen',
             emulate_tty=True
         ),
@@ -143,7 +144,7 @@ def generate_launch_description():
             node_name='gamepad_parser_node',
             output='screen',
             remappings=[('/{}/rover_motion_cmd'.format(namespace_), '/cmd_vel')],
-            parameters=[gamepad_parser_config_ns],
+            parameters=[gamepad_parser_config_ns, sim_params],
             emulate_tty=True
         ),
         Node(
@@ -152,7 +153,7 @@ def generate_launch_description():
             node_executable='locomotion_manager_node',
             node_name='locomotion_manager_node',
             output='screen',
-            parameters=[locomotion_manager_config_ns],
+            parameters=[locomotion_manager_config_ns, sim_params],
             emulate_tty=True
         ),
         Node(
@@ -164,7 +165,7 @@ def generate_launch_description():
             emulate_tty=True,
             remappings=[('/{}/rover_motion_cmd'.format(namespace_), '/cmd_vel')],
             # Parameters can be passed as dict or path to the .yaml
-            parameters=[urdf_params, stop_mode_config_ns]
+            parameters=[urdf_params, stop_mode_config_ns, sim_params]
         ),
         Node(
             package='simple_rover_locomotion',
@@ -174,7 +175,7 @@ def generate_launch_description():
             remappings=[('/{}/rover_motion_cmd'.format(namespace_), '/cmd_vel')],
             output='screen',
             emulate_tty=True,
-            parameters=[urdf_params, simple_rover_locomotion_config_ns]
+            parameters=[urdf_params, simple_rover_locomotion_config_ns, sim_params, sim_params]
         )
 
     ])

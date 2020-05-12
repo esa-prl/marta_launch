@@ -7,6 +7,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 
 from launch_helpers import get_ws_src_directory, to_urdf
 
@@ -20,7 +21,13 @@ ros2_ws_src = get_ws_src_directory('gamepad_parser')
 
 def generate_launch_description():
 
+    # Load Directories
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
+    marta_launch_dir = os.path.join(get_package_share_directory('marta_launch'), 'launch')
+
+    # Create the launch configuration variables
+    namespace = LaunchConfiguration('namespace')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Gazebo launch
     # Starts the gzserver (handles computations) and gzclient (handles visualization)
@@ -30,10 +37,20 @@ def generate_launch_description():
         )
     )
 
+    static_rover_in_map_tf_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'static_rover_in_map_tf.launch.py')),
+        launch_arguments={'namespace': namespace,
+                          'use_sim_time': use_sim_time}.items()
+    )
+
     # Create urdf file from xacro and gazebo file from the package rover_config
     pkg_rover_config = get_package_share_directory('rover_config')
     xacro_model = os.path.join(pkg_rover_config, 'urdf', 'marta.xacro')
     urdf_model = to_urdf(xacro_model)
+
+    # Parameters
+    sim_param = {'use_sim_time': use_sim_time}
 
     # Spawn rover
     spawn_rover = Node(
@@ -63,5 +80,6 @@ def generate_launch_description():
         ),
         gazebo,
         spawn_rover,
+        static_rover_in_map_tf_cmd
 
     ])

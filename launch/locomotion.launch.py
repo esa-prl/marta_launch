@@ -26,6 +26,7 @@ def generate_launch_description():
 
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
+    use_sim_time = LaunchConfiguration('use_sim_time')
     robot_model = LaunchConfiguration('robot_model')
 
     # ROBOT MODEL
@@ -61,7 +62,10 @@ def generate_launch_description():
                           'publish_default_velocities': True,
                           'publish_default_efforts': True,
                           'robot_description': urdf_model_path,
-                          'source_list': [os.path.join(namespace_, 'joint_states_sim')]}
+                          'source_list': [os.path.join(namespace_, 'joint_states_sim')],
+                          'use_sim_time': use_sim_time}
+
+    sim_param = {'use_sim_time': use_sim_time}
 
     # use_sim_time = True
 
@@ -86,20 +90,21 @@ def generate_launch_description():
                     ('/joint_states', os.path.join(namespace_, '/joint_states'))
             ],
             arguments=[urdf_model_path],
+            parameters=[sim_param],
             emulate_tty=True
         ),
-        Node(
-            package='joint_state_publisher',
-            node_namespace=namespace_,
-            node_executable='joint_state_publisher',
-            remappings=[
-                    ('/robot_description',
-                     os.path.join(namespace_, '/robot_description'))
-            ],
-            node_name='joint_state_publisher_node',
-            output='screen',
-            parameters=[(joint_state_params)]
-        ),
+        # Node(
+        #     package='joint_state_publisher',
+        #     node_namespace=namespace_,
+        #     node_executable='joint_state_publisher',
+        #     remappings=[
+        #             ('/robot_description',
+        #              os.path.join(namespace_, '/robot_description'))
+        #     ],
+        #     node_name='joint_state_publisher_node',
+        #     output='screen',
+        #     parameters=[(joint_state_params), sim_param]
+        # ),
         Node(
             package='joy',
             node_namespace=namespace_,
@@ -118,7 +123,7 @@ def generate_launch_description():
             node_name='gamepad_parser_node',
             output='screen',
             remappings=[(os.path.join(namespace_, '/rover_motion_cmd'), '/cmd_vel')],
-            parameters=[gamepad_parser_config_ns],
+            parameters=[gamepad_parser_config_ns, sim_param],
             emulate_tty=True
         ),
         Node(
@@ -127,7 +132,7 @@ def generate_launch_description():
             node_executable='locomotion_manager_node',
             node_name='locomotion_manager_node',
             output='screen',
-            parameters=[locomotion_manager_config_ns],
+            parameters=[locomotion_manager_config_ns, sim_param],
             emulate_tty=True
         ),
         Node(
@@ -139,7 +144,7 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
-            parameters=[urdf_params, simple_rover_locomotion_config_ns]
+            parameters=[urdf_params, simple_rover_locomotion_config_ns, sim_param]
         ),
         Node(
             package='locomotion_mode',
@@ -150,6 +155,6 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
-            parameters=[urdf_params, stop_mode_config_ns]
+            parameters=[urdf_params, stop_mode_config_ns, sim_param]
         )
     ])

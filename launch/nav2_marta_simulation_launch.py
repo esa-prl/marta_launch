@@ -142,18 +142,15 @@ def generate_launch_description():
         cmd=['gzclient'],
         cwd=[launch_dir], output='screen')
 
-    # TODO: Replace w/ Marta XACRO
-    urdf = os.path.join(
-        get_package_share_directory('rover_config'), 'urdf', 'turtlebot3_waffle.urdf')
-
-    # TODO: Start Locomotion launch file
     locomotion_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-        launch_arguments={'namespace': namespace}.items())
+        launch_arguments={'namespace': namespace,
+                          'use_sim_time': use_sim_time}.items())
 
     simulation_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'simulation.launch.py')),
-        launch_arguments={'namespace': namespace}.items())
+        launch_arguments={'namespace': namespace,
+                          'use_sim_time': use_sim_time}.items())
 
     static_rover_in_map_tf_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -168,6 +165,7 @@ def generate_launch_description():
         arguments=['-d', rviz_config_file],
         output='screen',
         use_remappings=IfCondition(use_remappings),
+        parameters=[{'use_sim_time': use_sim_time}],
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static'),
                     ('goal_pose', 'goal_pose'),
