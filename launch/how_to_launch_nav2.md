@@ -52,6 +52,13 @@ Build the workspace w/ colcon but without gazebo_ros as it makes troubles to com
 colcon build --packages-ignore gazebo_ros
 ```
 
+## marta_launch
+Checkout feature branch:
+```
+cd ros2_ws/src/marta_launch
+git checkout feature/nav2
+```
+
 # Usage
 Navigate to ros2_ws and source environment
 
