@@ -9,6 +9,11 @@ def generate_launch_description():
     """Start static transforms."""
     use_sim_time = LaunchConfiguration('use_sim_time')
 
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true')
+
     # Parameters
     sim_param = {'use_sim_time': use_sim_time}
 

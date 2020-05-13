@@ -15,10 +15,6 @@ from launch_ros.actions import Node
 
 namespace_ = ''
 
-# Get package src path based on a package name. Make sure the package is installed from source.
-ros2_ws_src = get_ws_src_directory('gamepad_parser')
-
-
 def generate_launch_description():
 
     # Load Directories
@@ -31,26 +27,17 @@ def generate_launch_description():
     xacro_model = os.path.join(pkg_rover_config, 'urdf', 'marta.xacro')
     urdf_model = to_urdf(xacro_model)
 
-    # Create the launch configuration variables
-    namespace = LaunchConfiguration('namespace')
-    use_sim_time = LaunchConfiguration('use_sim_time')
     world = LaunchConfiguration('world')
 
-    # Parameters
-    sim_param = {'use_sim_time': use_sim_time}
+    world_1 = os.path.join(rover_config_dir, 'worlds', 'turtlebot3_houses', 'waffle.model')
 
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace', default_value=namespace_,
-        description='Top-level namespace')
+    world_2 = os.path.join(pkg_gazebo_ros, 'worlds', 'empty.world')
 
-    # Nav2 Tutorial World
-    world_1 = os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model')
-    # Empty World
-    world_2 = os.path.join(rover_config_dir, 'worlds', 'empty.world')
+    world_3 = os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model')
 
     declare_world_cmd = DeclareLaunchArgument(
         'world',
-        default_value=[world_2, ''],
+        default_value=[world_3, ''],
         description='SDF world file')
 
     # Gazebo launch
@@ -58,7 +45,6 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py')),
-        # launch_arguments={'world': world}.items()
     )
 
     # Spawn rover
@@ -76,19 +62,11 @@ def generate_launch_description():
                    '-reference_frame', 'world']
     )
 
-    # Static tf from odom to base_link
-    odom_to_base_link_cmd = Node(package='tf2_ros',
-                                 node_executable='static_transform_publisher',
-                                 node_name='base_link_broadcaster',
-                                 arguments=['0', '0', '0.0', '0', '0', '0', 'odom', 'base_link'],
-                                 parameters=[sim_param])
-
     return LaunchDescription([
         # Launch Arguments
-        declare_namespace_cmd,
         declare_world_cmd,
 
         gazebo,
-        spawn_rover_cmd,
-        odom_to_base_link_cmd
+        # spawn_rover_cmd,
+
     ])

@@ -27,7 +27,7 @@ from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
-from nav2_common.launch import Node
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -44,22 +44,13 @@ def generate_launch_description():
     params_file = LaunchConfiguration('params_file')
     bt_xml_file = LaunchConfiguration('bt_xml_file')
     autostart = LaunchConfiguration('autostart')
-    use_remappings = LaunchConfiguration('use_remappings')
 
     # Launch configuration variables specific to simulation
     rviz_config_file = LaunchConfiguration('rviz_config_file')
     use_simulator = LaunchConfiguration('use_simulator')
-    use_robot_state_pub = LaunchConfiguration('use_robot_state_pub')
     use_rviz = LaunchConfiguration('use_rviz')
     headless = LaunchConfiguration('headless')
     world = LaunchConfiguration('world')
-
-    # TODO(orduno) Remove once `PushNodeRemapping` is resolved
-    #              https://github.com/ros2/launch_ros/issues/56
-    remappings = [((namespace, '/tf'), '/tf'),
-                  ((namespace, '/tf_static'), '/tf_static'),
-                  ('/tf', 'tf'),
-                  ('/tf_static', 'tf_static')]
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -79,7 +70,7 @@ def generate_launch_description():
 
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
-        default_value=os.path.join(bringup_dir, 'params', 'nav2_params.yaml'),
+        default_value=os.path.join(rover_config_dir, 'config', 'nav2_params.yaml'),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
     declare_bt_xml_cmd = DeclareLaunchArgument(
@@ -93,10 +84,6 @@ def generate_launch_description():
         'autostart', default_value='false',
         description='Automatically startup the nav2 stack')
 
-    declare_use_remappings_cmd = DeclareLaunchArgument(
-        'use_remappings', default_value='false',
-        description='Arguments to pass to all nodes launched by the file')
-
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config_file',
         default_value=os.path.join(bringup_dir, 'rviz', 'nav2_default_view.rviz'),
@@ -106,11 +93,6 @@ def generate_launch_description():
         'use_simulator',
         default_value='True',
         description='Whether to start the simulator')
-
-    declare_use_robot_state_pub_cmd = DeclareLaunchArgument(
-        'use_robot_state_pub',
-        default_value='True',
-        description='Whether to start the robot state publisher')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
         'use_rviz',
@@ -126,9 +108,11 @@ def generate_launch_description():
         'world',
         # TODO(orduno) Switch back once ROS argument passing has been fixed upstream
         #              https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/91
-        # default_value=os.path.join(get_package_share_directory('turtlebot3_gazebo'),
-        #                            'worlds/turtlebot3_worlds/waffle.model'),
-        default_value=os.path.join(rover_config_dir, 'urdf', 'marta.gazebo'),
+
+        # TURTLEBOT EXAMPLE
+        default_value=os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model'),
+        # EMPTY WORLD
+        # default_value=os.path.join(rover_config_dir, 'worlds', 'empty.world'),
         description='Full path to world model file to load')
 
     # Specify the actions
@@ -152,10 +136,16 @@ def generate_launch_description():
         launch_arguments={'namespace': namespace,
                           'use_sim_time': use_sim_time}.items())
 
-    static_rover_in_map_tf_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(
-            marta_launch_dir, 'static_rover_in_map_tf.launch.py')),
-        )
+    # Start Nav2 Stack
+    bringup_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'nav2_bringup_launch.py')),
+        # PythonLaunchDescriptionSource(os.path.join(launch_dir, 'nav2_bringup_launch.py')),
+        launch_arguments={'namespace': namespace,
+                          'map': map_yaml_file,
+                          'use_sim_time': use_sim_time,
+                          'params_file': params_file,
+                          'bt_xml_file': bt_xml_file,
+                          'autostart': autostart}.items())
 
     start_rviz_cmd = Node(
         condition=IfCondition(use_rviz),
@@ -164,7 +154,6 @@ def generate_launch_description():
         node_name='rviz2',
         arguments=['-d', rviz_config_file],
         output='screen',
-        use_remappings=IfCondition(use_remappings),
         parameters=[{'use_sim_time': use_sim_time}],
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static'),
@@ -177,17 +166,6 @@ def generate_launch_description():
             target_action=start_rviz_cmd,
             on_exit=EmitEvent(event=Shutdown(reason='rviz exited'))))
 
-    # Start Nav2 Stack
-    bringup_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'nav2_bringup_launch.py')),
-        launch_arguments={'namespace': namespace,
-                          'map': map_yaml_file,
-                          'use_sim_time': use_sim_time,
-                          'params_file': params_file,
-                          'bt_xml_file': bt_xml_file,
-                          'autostart': autostart,
-                          'use_remappings': use_remappings}.items())
-
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -198,7 +176,6 @@ def generate_launch_description():
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_bt_xml_cmd)
     ld.add_action(declare_autostart_cmd)
-    ld.add_action(declare_use_remappings_cmd)
 
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_use_simulator_cmd)
@@ -207,8 +184,6 @@ def generate_launch_description():
     ld.add_action(declare_world_cmd)
 
     # Add any conditioned actions
-    # ld.add_action(start_gazebo_server_cmd)
-    # ld.add_action(start_gazebo_client_cmd)
     ld.add_action(start_rviz_cmd)
 
     # Add other nodes and processes we need
@@ -218,6 +193,5 @@ def generate_launch_description():
     ld.add_action(locomotion_cmd)
     ld.add_action(simulation_cmd)
     ld.add_action(bringup_cmd)
-    # ld.add_action(static_rover_in_map_tf_cmd)
 
     return ld
