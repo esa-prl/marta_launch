@@ -1,4 +1,6 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
+
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
@@ -6,7 +8,7 @@ from launch_helpers import get_ws_src_directory, add_namespace_to_yaml, to_urdf
 
 import os
 
-namespace_ = 'marta'
+namespace_ = ''
 # Get package src path based on a package name. Make sure the package is installed from source.
 ros2_ws_src = get_ws_src_directory('gamepad_parser')
 
@@ -49,6 +51,9 @@ def generate_launch_description():
                           'source_list': ['/{}/joint_states_sim'.format(namespace_)]}
 
     return LaunchDescription([
+        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
+        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+
         Node(
             package='robot_state_publisher',
             node_namespace=namespace_,
@@ -61,8 +66,7 @@ def generate_launch_description():
             remappings=[
                     ('/joint_states', '/{}/joint_states'.format(namespace_))
             ],
-            arguments=[urdf_model_path],
-            emulate_tty=True
+            arguments=[urdf_model_path]
         ),
         Node(
             package='joint_state_publisher',
@@ -84,8 +88,7 @@ def generate_launch_description():
             remappings=[
                     ('joy', 'gamepad')
             ],
-            output='screen',
-            emulate_tty=True
+            output='screen'
         ),
         Node(
             package='gamepad_parser',
@@ -93,8 +96,7 @@ def generate_launch_description():
             node_executable='gamepad_parser_node',
             node_name='gamepad_parser_node',
             output='screen',
-            parameters=[gamepad_parser_config_ns],
-            emulate_tty=True
+            parameters=[gamepad_parser_config_ns]
         ),
         Node(
             package='locomotion_manager',
@@ -102,8 +104,7 @@ def generate_launch_description():
             node_executable='locomotion_manager_node',
             node_name='locomotion_manager_node',
             output='screen',
-            parameters=[locomotion_manager_config_ns],
-            emulate_tty=True
+            parameters=[locomotion_manager_config_ns]
         ),
         Node(
             package='simple_rover_locomotion',
@@ -111,7 +112,8 @@ def generate_launch_description():
             node_executable='simple_rover_locomotion_node',
             node_name='simple_rover_locomotion_node',
             output='screen',
-            emulate_tty=True,
+            # Makes WARN and ERROR print in colors
+            emulate_tty='True',
             # Parameters can be passed as dict or path to the .yaml
             parameters=[urdf_params, simple_rover_locomotion_config_ns]
         ),
@@ -121,7 +123,6 @@ def generate_launch_description():
             node_executable='stop_mode_node',
             node_name='stop_mode_node',
             output='screen',
-            emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
             parameters=[urdf_params, stop_mode_config_ns]
         ),
@@ -131,6 +132,5 @@ def generate_launch_description():
             node_executable='simple_joint_simulation_node',
             node_name='simple_joint_simulation_node',
             output='screen',
-            emulate_tty=True
         )
     ])

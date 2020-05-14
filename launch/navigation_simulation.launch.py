@@ -92,7 +92,7 @@ def generate_launch_description():
 
     declare_use_simulator_cmd = DeclareLaunchArgument(
         'use_simulator',
-        default_value='False',
+        default_value='True',
         description='Whether to start the simulator')
 
     declare_use_gazebo_gui_cmd = DeclareLaunchArgument(

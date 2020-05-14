@@ -5,11 +5,13 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument  # , SetEnvironmentVariable
-from launch_ros.actions import Node
 # from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 
 from launch_helpers import add_namespace_to_yaml, to_urdf
+
+from launch_ros.actions import Node
+
 
 namespace_ = ''
 
@@ -75,6 +77,10 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'namespace', default_value=namespace_,
             description='Top-level namespace'),
+
+        DeclareLaunchArgument(
+            'use_sim_time', default_value=use_sim_time,
+            description='Use simulation (Gazebo) clock if true'),
 
         DeclareLaunchArgument(
             'robot_model', default_value=urdf_model_path,
