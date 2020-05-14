@@ -49,7 +49,7 @@ def generate_launch_description():
     rviz_config_file = LaunchConfiguration('rviz_config_file')
     use_simulator = LaunchConfiguration('use_simulator')
     use_rviz = LaunchConfiguration('use_rviz')
-    headless = LaunchConfiguration('headless')
+    use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
     world = LaunchConfiguration('world')
 
     # Declare the launch arguments
@@ -60,7 +60,7 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(bringup_dir, 'maps', 'turtlebot3_world.yaml'),
+        default_value=os.path.join(rover_config_dir, 'maps', 'tb3_world_big.yaml'),
         description='Full path to map file to load')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -81,7 +81,8 @@ def generate_launch_description():
         description='Full path to the behavior tree xml file to use')
 
     declare_autostart_cmd = DeclareLaunchArgument(
-        'autostart', default_value='false',
+        'autostart',
+        default_value='false',
         description='Automatically startup the nav2 stack')
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
@@ -91,18 +92,18 @@ def generate_launch_description():
 
     declare_use_simulator_cmd = DeclareLaunchArgument(
         'use_simulator',
-        default_value='True',
+        default_value='False',
         description='Whether to start the simulator')
+
+    declare_use_gazebo_gui_cmd = DeclareLaunchArgument(
+        'use_gazebo_gui',
+        default_value='False',
+        description='Whether to execute gzclient)')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
         'use_rviz',
         default_value='True',
         description='Whether to start RVIZ')
-
-    declare_simulator_cmd = DeclareLaunchArgument(
-        'headless',
-        default_value='False',
-        description='Whether to execute gzclient)')
 
     declare_world_cmd = DeclareLaunchArgument(
         'world',
@@ -110,22 +111,12 @@ def generate_launch_description():
         #              https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/91
 
         # TURTLEBOT EXAMPLE
-        default_value=os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model'),
+        # default_value=os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model'),
         # EMPTY WORLD
-        # default_value=os.path.join(rover_config_dir, 'worlds', 'empty.world'),
+        default_value=os.path.join(rover_config_dir, 'worlds', 'empty.world'),
         description='Full path to world model file to load')
 
     # Specify the actions
-    start_gazebo_server_cmd = ExecuteProcess(
-        condition=IfCondition(use_simulator),
-        cmd=['gzserver', '-s', 'libgazebo_ros_init.so', world],
-        cwd=[launch_dir], output='screen')
-
-    start_gazebo_client_cmd = ExecuteProcess(
-        condition=IfCondition(PythonExpression([use_simulator, ' and not ', headless])),
-        cmd=['gzclient'],
-        cwd=[launch_dir], output='screen')
-
     locomotion_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'locomotion.launch.py')),
         launch_arguments={'namespace': namespace,
@@ -134,7 +125,9 @@ def generate_launch_description():
     simulation_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'simulation.launch.py')),
         launch_arguments={'namespace': namespace,
-                          'use_sim_time': use_sim_time}.items())
+                          'use_sim_time': use_sim_time,
+                          'use_simulator': use_simulator,
+                          'use_gazebo_gui': use_gazebo_gui}.items())
 
     # Start Nav2 Stack
     bringup_cmd = IncludeLaunchDescription(
@@ -171,8 +164,8 @@ def generate_launch_description():
 
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
-    ld.add_action(declare_map_yaml_cmd)
     ld.add_action(declare_use_sim_time_cmd)
+    ld.add_action(declare_map_yaml_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_bt_xml_cmd)
     ld.add_action(declare_autostart_cmd)
@@ -180,7 +173,7 @@ def generate_launch_description():
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_use_simulator_cmd)
     ld.add_action(declare_use_rviz_cmd)
-    ld.add_action(declare_simulator_cmd)
+    ld.add_action(declare_use_gazebo_gui_cmd)
     ld.add_action(declare_world_cmd)
 
     # Add any conditioned actions
