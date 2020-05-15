@@ -19,23 +19,21 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
+from launch.actions import (DeclareLaunchArgument, EmitEvent,
                             IncludeLaunchDescription, RegisterEventHandler)
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration
 
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
     # Get the launch directory
-    bringup_dir = get_package_share_directory('nav2_bringup')
-    launch_dir = os.path.join(bringup_dir, 'launch')
     marta_launch_dir = os.path.join(get_package_share_directory('marta_launch'), 'launch')
-    rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
+    rover_config_dir = get_package_share_directory('rover_config')
 
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
@@ -87,7 +85,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config_file',
-        default_value=os.path.join(bringup_dir, 'rviz', 'nav2_default_view.rviz'),
+        default_value=os.path.join(rover_config_dir, 'rviz', 'nav2_default_view.rviz'),
         description='Full path to the RVIZ config file to use')
 
     declare_use_simulator_cmd = DeclareLaunchArgument(
@@ -97,7 +95,7 @@ def generate_launch_description():
 
     declare_use_gazebo_gui_cmd = DeclareLaunchArgument(
         'use_gazebo_gui',
-        default_value='False',
+        default_value='True',
         description='Whether to execute gzclient)')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(

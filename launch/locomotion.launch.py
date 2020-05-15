@@ -8,83 +8,73 @@ from launch.actions import DeclareLaunchArgument  # , SetEnvironmentVariable
 # from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 
-from launch_helpers import add_namespace_to_yaml, to_urdf
+from launch_helpers import to_urdf
 
 from launch_ros.actions import Node
 
+from nav2_common.launch import RewrittenYaml
 
+# TODO: DO NOT USE THIS. Should be replaced w/ launch config.
 namespace_ = ''
 
 
 def generate_launch_description():
     """Launch description."""
     # Get the directories
-    launch_dir = get_package_share_directory('marta_launch')
-    gamepad_parser_dir = get_package_share_directory('gamepad_parser')
     rover_config_dir = get_package_share_directory('rover_config')
-    locomotion_manager_dir = get_package_share_directory('locomotion_manager')
-    locomotion_mode_dir = get_package_share_directory('locomotion_mode')
-    simple_rover_locomotion_dir = get_package_share_directory('simple_rover_locomotion')
 
-    # Create the launch configuration variables
-    namespace = LaunchConfiguration('namespace')
-    use_sim_time = LaunchConfiguration('use_sim_time')
-    robot_model = LaunchConfiguration('robot_model')
-
-    # ROBOT MODEL
+    # ## ROBOT MODEL
     # Load XACRO and parse to URDF
-    xacro_model_name = "marta.xacro"
+    xacro_model_name = 'marta.xacro'
     xacro_model_path = os.path.join(rover_config_dir, 'urdf', xacro_model_name)
 
     # Parse XACRO file to URDF
     urdf_model_path = to_urdf(xacro_model_path)
-    urdf_params = {'urdf_model_path': urdf_model_path}
 
-    # ## PARAMETERS
-    # Individual Parameter files
-    gamepad_parser_config = os.path.join(
-        gamepad_parser_dir, 'gamepad_parser.yaml')
-    locomotion_manager_config = os.path.join(
-        locomotion_manager_dir, 'locomotion_manager.yaml')
-    simple_rover_locomotion_config = os.path.join(
-        simple_rover_locomotion_dir, 'config', 'robot_poses.yaml')
-    stop_mode_config = os.path.join(
-        locomotion_mode_dir, 'config', 'stop_mode.yaml')
+    # Create the launch configuration variables
+    namespace = LaunchConfiguration('namespace')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    config_file = LaunchConfiguration('config_file')
+    robot_description = LaunchConfiguration('robot_description')
 
-    # Add namespace to the yaml file
-    gamepad_parser_config_ns = add_namespace_to_yaml(namespace_, gamepad_parser_config)
-    locomotion_manager_config_ns = add_namespace_to_yaml(namespace_, locomotion_manager_config)
-    simple_rover_locomotion_config_ns = add_namespace_to_yaml(namespace_,
-                                                              simple_rover_locomotion_config)
-    stop_mode_config_ns = add_namespace_to_yaml(namespace_, stop_mode_config)
+    # Launch declarations
+    declare_namespace_cmd = DeclareLaunchArgument(
+        'namespace',
+        default_value='',
+        description='Top-level namespace')
 
-    # Parameters for the joint_state_publisher
-    joint_state_params = {'use_gui': True,
-                          'rate':    50,
-                          'publish_default_velocities': True,
-                          'publish_default_efforts': True,
-                          'robot_description': urdf_model_path,
-                          'source_list': [os.path.join(namespace_, 'joint_states_sim')],
-                          'use_sim_time': use_sim_time}
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='False',
+        description='Use simulation (Gazebo) clock if true')
 
-    sim_param = {'use_sim_time': use_sim_time}
+    declare_config_file_cmd = DeclareLaunchArgument(
+        'config_file',
+        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
+        description='Full path to the ROS2 parameters file to use for all launched nodes')
 
-    # use_sim_time = True
+    declare_robot_description_cmd = DeclareLaunchArgument(
+        'robot_description',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
+
+    # Create our own temporary YAML files that include substitutions
+    param_substitutions = {
+        'use_sim_time': use_sim_time,
+        'robot_description': robot_description}
+
+    configured_params = RewrittenYaml(
+        source_file=config_file,
+        root_key=namespace,
+        param_rewrites=param_substitutions,
+        convert_types=True)
 
     return LaunchDescription([
-        # TODO: The launch arguments are actually not doing anything atm...
         # Launch Arguments
-        DeclareLaunchArgument(
-            'namespace', default_value=namespace_,
-            description='Top-level namespace'),
-
-        DeclareLaunchArgument(
-            'use_sim_time', default_value=use_sim_time,
-            description='Use simulation (Gazebo) clock if true'),
-
-        DeclareLaunchArgument(
-            'robot_model', default_value=urdf_model_path,
-            description='Robot Model'),
+        declare_namespace_cmd,
+        declare_use_sim_time_cmd,
+        declare_config_file_cmd,
+        declare_robot_description_cmd,
 
         # Nodes
         Node(
@@ -95,8 +85,10 @@ def generate_launch_description():
             remappings=[
                     ('/joint_states', os.path.join(namespace_, '/joint_states'))
             ],
-            arguments=[urdf_model_path],
-            parameters=[sim_param],
+            arguments=[robot_description],
+            # TODO: Remove arguments once the robot_desc. works via parameters
+            #       Should be with Foxy
+            parameters=[configured_params],
             emulate_tty=True
         ),
         Node(
@@ -108,6 +100,7 @@ def generate_launch_description():
                     ('joy', 'gamepad')
             ],
             output='screen',
+            parameters=[configured_params],
             emulate_tty=True
         ),
         Node(
@@ -117,7 +110,7 @@ def generate_launch_description():
             node_name='gamepad_parser_node',
             output='screen',
             remappings=[(os.path.join(namespace_, '/rover_motion_cmd'), '/cmd_vel')],
-            parameters=[gamepad_parser_config_ns, sim_param],
+            parameters=[configured_params],
             emulate_tty=True
         ),
         Node(
@@ -126,7 +119,7 @@ def generate_launch_description():
             node_executable='locomotion_manager_node',
             node_name='locomotion_manager_node',
             output='screen',
-            parameters=[locomotion_manager_config_ns, sim_param],
+            parameters=[configured_params],
             emulate_tty=True
         ),
         Node(
@@ -138,7 +131,7 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
-            parameters=[urdf_params, simple_rover_locomotion_config_ns, sim_param]
+            parameters=[configured_params]
         ),
         Node(
             package='locomotion_mode',
@@ -149,6 +142,6 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
-            parameters=[urdf_params, stop_mode_config_ns, sim_param]
+            parameters=[configured_params]
         )
     ])
