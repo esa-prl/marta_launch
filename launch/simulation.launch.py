@@ -32,13 +32,14 @@ def generate_launch_description():
     # Create urdf file from xacro and gazebo file from the package rover_config
     pkg_rover_config = get_package_share_directory('rover_config')
     xacro_model = os.path.join(pkg_rover_config, 'urdf', 'marta.xacro')
-    urdf_model = to_urdf(xacro_model)
+    urdf_model_path = to_urdf(xacro_model)
 
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
+    robot_description = LaunchConfiguration('robot_description')
     world = LaunchConfiguration('world')
 
     # Create the launch declarations
@@ -46,6 +47,11 @@ def generate_launch_description():
         'namespace',
         default_value=namespace_,
         description='Top-level namespace')
+
+    declare_robot_description_cmd = DeclareLaunchArgument(
+        'robot_description',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
@@ -87,7 +93,7 @@ def generate_launch_description():
         arguments=['-entity',
                    'marta',
                    '-x', '-1.5', '-y', '-1', '-z', '1',
-                   '-file', urdf_model,
+                   '-file', robot_description,
                    '-reference_frame', 'world']
     )
 
@@ -105,6 +111,7 @@ def generate_launch_description():
         declare_use_simulator_cmd,
         declare_use_gazebo_gui_cmd,
         declare_world_cmd,
+        declare_robot_description_cmd,
         # Start Nodes
         gazebo_cmd,
         spawn_rover_cmd,

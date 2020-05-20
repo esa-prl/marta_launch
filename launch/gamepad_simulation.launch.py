@@ -1,155 +1,123 @@
-"""Launch the rover_simulation node"""
 import os
 
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 
-from launch_helpers import add_namespace_to_yaml, get_ws_src_directory, to_urdf
+from launch_helpers import to_urdf
 
 from launch_ros.actions import Node
-
-namespace_ = 'marta'
-
-# Get package src path based on a package name. Make sure the package is installed from source.
-ros2_ws_src = get_ws_src_directory('gamepad_parser')
 
 
 def generate_launch_description():
 
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_nav2_bringup = get_package_share_directory('nav2_bringup')
+    marta_launch_dir = os.path.join(get_package_share_directory('marta_launch'), 'launch')
+    rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
 
-    # Gazebo launch
-    # Starts the gzserver (handles computations) and gzclient (handles visualization)
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
-        )
-    )
+    # Launch configurations
+    namespace = LaunchConfiguration('namespace')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    config_file = LaunchConfiguration('config_file')
+    robot_description = LaunchConfiguration('robot_description')
+    rviz_config_file = LaunchConfiguration('rviz_config_file')
+    use_rviz = LaunchConfiguration('use_rviz')
+    use_simulator = LaunchConfiguration('use_simulator')
+    use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
 
-    nav2_navigation = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_nav2_bringup, 'launch', 'nav2_navigation_launch.py'),
-        )
-    )
+    # ## ROBOT MODEL
+    # Load XACRO and parse to URDF
+    xacro_model_name = 'marta.xacro'
+    xacro_model_path = os.path.join(rover_config_dir, 'urdf', xacro_model_name)
 
-    # Individual Parameter files
-    gamepad_parser_config = os.path.join(
-        ros2_ws_src, 'gamepad_parser', 'config', 'gamepad_parser.yaml')
-    locomotion_manager_config = os.path.join(
-        ros2_ws_src, 'locomotion_manager', 'config', 'locomotion_manager.yaml')
-    simple_rover_locomotion_config = os.path.join(
-        ros2_ws_src, 'simple_rover_locomotion', 'config', 'robot_poses.yaml')
-    stop_mode_config = os.path.join(
-        ros2_ws_src, 'locomotion_mode', 'config', 'stop_mode.yaml')
+    # Parse XACRO file to URDF
+    urdf_model_path = to_urdf(xacro_model_path)
 
-    # Add namespace to the yaml file
-    gamepad_parser_config_ns = add_namespace_to_yaml(
-        namespace_, gamepad_parser_config)
-    locomotion_manager_config_ns = add_namespace_to_yaml(
-        namespace_, locomotion_manager_config)
-    simple_rover_locomotion_config_ns = add_namespace_to_yaml(
-        namespace_, simple_rover_locomotion_config)
-    stop_mode_config_ns = add_namespace_to_yaml(
-        namespace_, stop_mode_config)
+    # Launch declarations
+    declare_namespace_cmd = DeclareLaunchArgument(
+        'namespace',
+        default_value='',
+        description='Top-level namespace')
 
-    # Create urdf file from xacro and gazebo file from the package rover_config
-    pkg_rover_config = get_package_share_directory('rover_config')
-    xacro_model = os.path.join(pkg_rover_config, 'urdf', 'marta.xacro')
-    urdf_model = to_urdf(xacro_model)
-    urdf_params = {'urdf_model_path': urdf_model}
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='False',
+        description='Use simulation (Gazebo) clock if true')
 
-    # Spawn rover
-    spawn_rover = Node(
-        package='gazebo_ros',
-        node_executable='spawn_entity.py',
-        node_name='spawn_entity',
-        node_namespace=namespace_,
-        output='screen',
-        emulate_tty=True,
-        arguments=['-entity',
-                   'marta',
-                   '-x', '0', '-y', '0', '-z', '1',
-                   '-file', urdf_model,
-                   '-reference_frame', 'world']
-    )
+    declare_config_file_cmd = DeclareLaunchArgument(
+        'config_file',
+        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
+        description='Full path to the ROS2 parameters file to use for all launched nodes')
 
-    # Launch robot_state_publisher to publish the robot description
-    # and convert joint_states to tf messages
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        node_namespace=namespace_,
-        node_executable='robot_state_publisher',
-        node_name='robot_state_publisher_node',
-        remappings=[
-                ('/joint_states', '/{}/joint_states'.format(namespace_))
-        ],
-        arguments=[urdf_model],
-        emulate_tty=True
-    )
+    declare_robot_description_cmd = DeclareLaunchArgument(
+        'robot_description',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
+
+    declare_rviz_config_file_cmd = DeclareLaunchArgument(
+        'rviz_config_file',
+        default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_sim.rviz'),
+        description='Full path to the RVIZ config file to use')
+
+    declare_use_rviz_cmd = DeclareLaunchArgument(
+        'use_rviz',
+        default_value='True',
+        description='Whether to start RVIZ')
+
+    declare_use_simulator_cmd = DeclareLaunchArgument(
+        'use_simulator',
+        default_value='True',
+        description='Whether to start the simulator')
+
+    declare_use_gazebo_gui_cmd = DeclareLaunchArgument(
+        'use_gazebo_gui',
+        default_value='False',
+        description='Whether to execute gzclient)')
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'world',
-            default_value=[os.path.join(
-                pkg_gazebo_ros, 'worlds', 'empty.world'), ''],
-            description='SDF world file'
-        ),
-        gazebo,
-        # nav2_navigation,
-        spawn_rover,
-        robot_state_publisher_node,
-        Node(
-            package='joy',
-            node_namespace=namespace_,
-            node_executable='joy_node',
-            node_name='joy_node',
-            remappings=[
-                    ('joy', 'gamepad')
-            ],
-            output='screen',
-            emulate_tty=True
-        ),
-        Node(
-            package='gamepad_parser',
-            node_namespace=namespace_,
-            node_executable='gamepad_parser_node',
-            node_name='gamepad_parser_node',
-            output='screen',
-            parameters=[gamepad_parser_config_ns],
-            emulate_tty=True
-        ),
-        Node(
-            package='locomotion_manager',
-            node_namespace=namespace_,
-            node_executable='locomotion_manager_node',
-            node_name='locomotion_manager_node',
-            output='screen',
-            parameters=[locomotion_manager_config_ns],
-            emulate_tty=True
-        ),
-        Node(
-            package='locomotion_mode',
-            node_namespace=namespace_,
-            node_executable='stop_mode_node',
-            node_name='stop_mode_node',
-            output='screen',
-            emulate_tty=True,
-            # Parameters can be passed as dict or path to the .yaml
-            parameters=[urdf_params, stop_mode_config_ns]
-        ),
-        Node(
-            package='simple_rover_locomotion',
-            node_namespace=namespace_,
-            node_executable='simple_rover_locomotion_node',
-            node_name='simple_rover_locomotion_node',
-            output='screen',
-            emulate_tty=True,
-            parameters=[urdf_params, simple_rover_locomotion_config_ns]
-        )
+        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
+        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
 
+        # Parameter Declarations
+        declare_namespace_cmd,
+        declare_use_sim_time_cmd,
+        declare_config_file_cmd,
+        declare_robot_description_cmd,
+        declare_rviz_config_file_cmd,
+        declare_use_rviz_cmd,
+        declare_use_simulator_cmd,
+        declare_use_gazebo_gui_cmd,
+
+        IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'locomotion.launch.py')),
+                                 launch_arguments={
+                                     'namespace': namespace,
+                                     'use_sim_time': use_sim_time,
+                                     'config_file': config_file,
+                                     'robot_description': robot_description
+                                 }.items()),
+
+        IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'simulation.launch.py')),
+                                 launch_arguments={
+                                     'namespace': namespace,
+                                     'use_sim_time': use_sim_time,
+                                     'use_simulator': use_simulator,
+                                     'use_gazebo_gui': use_gazebo_gui,
+                                     'robot_description': robot_description
+                                 }.items()),
+
+        Node(
+            condition=IfCondition(use_rviz),
+            package='rviz2',
+            node_executable='rviz2',
+            node_name='rviz2',
+            arguments=['-d', rviz_config_file],
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}],
+            remappings=[('/tf', 'tf'),
+                        ('/tf_static', 'tf_static')])
     ])
