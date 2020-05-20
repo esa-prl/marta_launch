@@ -57,7 +57,7 @@ You can check the configration arguments of a launch file with the following com
 ### Master Launch Files
 The launch files can be launched in isolation and should deliver the described functionallity.
 
-* **navigation_simulation.launch.py:** Launches MaRTA together with the [navigation stack](navigation.ros.org/) and GUI in RVIZ which allows to set waypoints.
+* **navigation_simulation.launch.py:** Launches MaRTA together with the [navigation stack](https://navigation.ros.org/) and GUI in RVIZ which allows to set waypoints.
 
 * **gamepad_simulation.launch.py:**  Launches MaRTA in an empty gazebo world ready to be controlled by a gamepad.
 
