@@ -12,8 +12,6 @@ from launch_helpers import to_urdf
 
 from launch_ros.actions import Node
 
-from nav2_common.launch import RewrittenYaml
-
 
 def generate_launch_description():
 
@@ -27,6 +25,8 @@ def generate_launch_description():
     robot_description = LaunchConfiguration('robot_description')
     rviz_config_file = LaunchConfiguration('rviz_config_file')
     use_rviz = LaunchConfiguration('use_rviz')
+    use_simulator = LaunchConfiguration('use_simulator')
+    use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
 
     # ## ROBOT MODEL
     # Load XACRO and parse to URDF
@@ -59,7 +59,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config_file',
-        default_value=os.path.join(rover_config_dir, 'rviz', 'simple_sim.rviz'),
+        default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_sim.rviz'),
         description='Full path to the RVIZ config file to use')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
@@ -67,16 +67,15 @@ def generate_launch_description():
         default_value='True',
         description='Whether to start RVIZ')
 
-    # Create our own temporary YAML files that include substitutions
-    param_substitutions = {
-        'use_sim_time': use_sim_time,
-        'robot_description': urdf_model_path}
+    declare_use_simulator_cmd = DeclareLaunchArgument(
+        'use_simulator',
+        default_value='True',
+        description='Whether to start the simulator')
 
-    configured_params = RewrittenYaml(
-        source_file=config_file,
-        root_key=namespace,
-        param_rewrites=param_substitutions,
-        convert_types=True)
+    declare_use_gazebo_gui_cmd = DeclareLaunchArgument(
+        'use_gazebo_gui',
+        default_value='False',
+        description='Whether to execute gzclient)')
 
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
@@ -89,6 +88,8 @@ def generate_launch_description():
         declare_robot_description_cmd,
         declare_rviz_config_file_cmd,
         declare_use_rviz_cmd,
+        declare_use_simulator_cmd,
+        declare_use_gazebo_gui_cmd,
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')),
@@ -99,20 +100,16 @@ def generate_launch_description():
                                      'robot_description': robot_description
                                  }.items()),
 
-        Node(
-            package='joint_state_publisher',
-            node_executable='joint_state_publisher',
-            node_name='joint_state_publisher_node',
-            output='screen',
-            parameters=[configured_params]
-        ),
-        Node(
-            package='simple_joint_simulation',
-            node_executable='simple_joint_simulation_node',
-            node_name='simple_joint_simulation_node',
-            output='screen',
-            parameters=[configured_params]
-        ),
+        IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'simulation.launch.py')),
+                                 launch_arguments={
+                                     'namespace': namespace,
+                                     'use_sim_time': use_sim_time,
+                                     'use_simulator': use_simulator,
+                                     'use_gazebo_gui': use_gazebo_gui,
+                                     'robot_description': robot_description
+                                 }.items()),
+
         Node(
             condition=IfCondition(use_rviz),
             package='rviz2',

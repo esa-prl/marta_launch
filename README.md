@@ -46,16 +46,37 @@ Run the system test with:
 
 Run any of the provided launch files with:
 
-	ros2 launch [FILE_NAME].launch.py
+	ros2 launch marta_launch [FILE_NAME].launch.py
 
-## Launch files
+## Launch Files
+
+You can check the configration arguments of a launch file with the following command:
+
+	ros2 launch marta_launch [FILE_NAME].launch.py -s
+
+### Master Launch Files
+The launch files can be launched in isolation and should deliver the described functionallity.
+
+* **navigation_simulation.launch.py:** Launches MaRTA together with the [navigation stack](navigation.ros.org/) and GUI in RVIZ which allows to set waypoints.
+
+* **gamepad_simulation.launch.py:**  Launches MaRTA in an empty gazebo world ready to be controlled by a gamepad.
+
+* **simple_simulation.launch.py** Launches MaRTA as a visualization of the robot in RVIZ2.
+
+### Sub Launch Files
+These launch files contain nodes that are commonly launch together. They are not intended to be launched alone, but to be instead included in master launch files.
 
 
-* **dummy_control.launch.py:**  
+* **simulation.launch.py** Launches the simulation only.
 
-* **simple_simulation.launch.py** Launches all nodes to control a visualization of the robot in RVIZ2.
+* **locomotion.launch.py** Launches all locomotion control nodes including the gamepad.
 
-* **simulation_control.launch.py** Launches a simulation of the rover in Gazebo and the nodes to control it via gamepad.
+* **nav2_bringup_launch.py** Launches the navigation stack without any MaRTA features.
+
+* **nav2_navigation_launch.py** Launches navigation nodes of nav2.
+
+* **nav2_localization_launch.py** Launches localization nodes of na2.
+
 
 
 ## Bugs & Feature Requests
