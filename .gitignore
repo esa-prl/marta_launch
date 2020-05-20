@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-*.pyc
-*.cpython-36.pyc
-=======
 # vi stuff
 .*.sw?
 
@@ -19,4 +15,3 @@
 .DS_Store
 
 CATKIN_IGNORE
->>>>>>> abed9deb221094f1cd7219438f09fca794eede6e
