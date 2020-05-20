@@ -45,8 +45,8 @@ def generate_launch_description():
 
     # Launch configuration variables specific to simulation
     rviz_config_file = LaunchConfiguration('rviz_config_file')
-    use_simulator = LaunchConfiguration('use_simulator')
     use_rviz = LaunchConfiguration('use_rviz')
+    use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
     world = LaunchConfiguration('world')
 
