@@ -27,6 +27,7 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration('use_rviz')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
+    world = LaunchConfiguration('world')
 
     # ## ROBOT MODEL
     # Load XACRO and parse to URDF
@@ -74,8 +75,18 @@ def generate_launch_description():
 
     declare_use_gazebo_gui_cmd = DeclareLaunchArgument(
         'use_gazebo_gui',
-        default_value='False',
+        default_value='True',
         description='Whether to execute gzclient)')
+
+    declare_world_cmd = DeclareLaunchArgument(
+        'world',
+        # TODO(orduno) Switch back once ROS argument passing has been fixed upstream
+        #              https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/91
+        # EMPTY WORLD
+        # default_value=os.path.join(rover_config_dir, 'worlds', 'empty.world'),
+        # MARS YARD
+        default_value=os.path.join(rover_config_dir, 'worlds', 'mars_yard.world'),
+        description='Full path to world model file to load')
 
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
@@ -90,6 +101,7 @@ def generate_launch_description():
         declare_use_rviz_cmd,
         declare_use_simulator_cmd,
         declare_use_gazebo_gui_cmd,
+        declare_world_cmd,
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')),
