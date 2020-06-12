@@ -94,7 +94,7 @@ def generate_launch_description():
         emulate_tty=True,
         arguments=['-entity',
                    'marta',
-                   '-x', '-1.5', '-y', '-1', '-z', '2',
+                   '-x', '1.5', '-y', '1', '-z', '2',
                    '-file', robot_description,
                    '-reference_frame', 'world']
     )
