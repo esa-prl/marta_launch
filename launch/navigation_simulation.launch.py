@@ -109,7 +109,7 @@ def generate_launch_description():
         #              https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/91
 
         # TURTLEBOT EXAMPLE
-        # default_value=os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model'),
+        # default_value=os.path.join(rover_config_dir, 'worlds', 'tb3_world.model'),
         # EMPTY WORLD
         default_value=os.path.join(rover_config_dir, 'worlds', 'empty.world'),
         description='Full path to world model file to load')

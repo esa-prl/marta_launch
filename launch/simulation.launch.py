@@ -25,9 +25,11 @@ def generate_launch_description():
     namespace_ = ''
 
     # Nav2 Tutorial World
-    world_1 = os.path.join(rover_config_dir, 'worlds', 'empty_worlds', 'world_only.model')
+    world_1 = os.path.join(rover_config_dir, 'worlds', 'tb3_world.model')
     # Empty World
     world_2 = os.path.join(rover_config_dir, 'worlds', 'empty.world')
+    # Mars Yard
+    world_3 = os.path.join(rover_config_dir, 'worlds', 'mars_yard.world')
 
     # Create urdf file from xacro and gazebo file from the package rover_config
     pkg_rover_config = get_package_share_directory('rover_config')
@@ -70,7 +72,7 @@ def generate_launch_description():
 
     declare_world_cmd = DeclareLaunchArgument(
         'world',
-        default_value=[world_2, ''],
+        default_value=[world_3, ''],
         description='SDF world file')
 
     # Gazebo launch
@@ -92,7 +94,7 @@ def generate_launch_description():
         emulate_tty=True,
         arguments=['-entity',
                    'marta',
-                   '-x', '-1.5', '-y', '-1', '-z', '1',
+                   '-x', '-1.5', '-y', '-1', '-z', '2',
                    '-file', robot_description,
                    '-reference_frame', 'world']
     )
