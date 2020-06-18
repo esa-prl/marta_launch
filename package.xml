@@ -12,6 +12,24 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
+  <exec_depend>gamepad_emulation</exec_depend>
+  <exec_depend>gamepad_parser</exec_depend>
+  <exec_depend>gazebo_ros_pkgs</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>launch_helpers</exec_depend>
+  <exec_depend>locomotion_manager</exec_depend>
+  <exec_depend>locomotion_mode</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rover_config</exec_depend>
+  <exec_depend>rover_gazebo_plugin</exec_depend>
+  <exec_depend>rover_msgs</exec_depend>
+  <exec_depend>rover_simulation</exec_depend>
+  <exec_depend>simple_joint_simulation</exec_depend>
+  <exec_depend>simple_rover_locomotion</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>
