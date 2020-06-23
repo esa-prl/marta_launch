@@ -21,6 +21,7 @@
   <exec_depend>locomotion_manager</exec_depend>
   <exec_depend>locomotion_mode</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>ptu_control</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rover_config</exec_depend>
   <exec_depend>rover_gazebo_plugins</exec_depend>

@@ -35,7 +35,8 @@ def generate_launch_description():
     xacro_model_path = os.path.join(rover_config_dir, 'urdf', xacro_model_name)
 
     # Parse XACRO file to URDF
-    urdf_model_path = to_urdf(xacro_model_path)
+    # TODO: Use LaunchConfigurations arguments to set parameters in URDF. How can the parameters be read out here???
+    urdf_model_path = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
 
     # Launch declarations
     declare_namespace_cmd = DeclareLaunchArgument(
