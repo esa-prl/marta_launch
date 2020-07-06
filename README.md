@@ -11,7 +11,7 @@ The source code is released under a [TODO: Add License]().
 
 **Author: Miro Voellmy<br />
 Affiliation: [European Space Agency](https://www.esa.int/)<br />
-Maintainer: Miro Voellmy, miro.voellmy@esa.com**
+Maintainer: Miro Voellmy, miro.voellmy@esa.int**
 
 The MaRTA Launch package has been tested under [ROS2] Eloquent and Ubuntu 18.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
