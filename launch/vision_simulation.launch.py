@@ -3,20 +3,22 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import (DeclareLaunchArgument, GroupAction,
+                            IncludeLaunchDescription, SetEnvironmentVariable)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 from launch_helpers import to_urdf
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, PushRosNamespace
 
 
 def generate_launch_description():
 
     marta_launch_dir = os.path.join(get_package_share_directory('marta_launch'), 'launch')
     rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
+    stereo_image_proc_launch_dir = os.path.join(get_package_share_directory('stereo_image_proc'), 'launch')
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
@@ -28,6 +30,7 @@ def generate_launch_description():
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
     world = LaunchConfiguration('world')
+    use_loc_cam = LaunchConfiguration('use_loc_cam')
 
     # ## ROBOT MODEL
     # Load XACRO and parse to URDF
@@ -35,8 +38,7 @@ def generate_launch_description():
     xacro_model_path = os.path.join(rover_config_dir, 'urdf', xacro_model_name)
 
     # Parse XACRO file to URDF
-    # TODO: Use LaunchConfigurations arguments to set parameters in URDF. How can the parameters be read out here???
-    urdf_model_path = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
+    urdf_model_path = to_urdf(xacro_model_path)
 
     # Launch declarations
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -89,6 +91,16 @@ def generate_launch_description():
         default_value=os.path.join(rover_config_dir, 'worlds', 'mars_yard.world'),
         description='Full path to world model file to load')
 
+    declare_use_loc_cam_cmd = DeclareLaunchArgument(
+        'use_loc_cam',
+        default_value='True',
+        description='Whether to process loc_cam data.)')
+
+    declare_loc_cam_name_cmd = DeclareLaunchArgument(
+        'loc_cam_name',
+        default_value='loc_cam',
+        description='Name of loc_cam.)')
+
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
         SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
@@ -103,6 +115,7 @@ def generate_launch_description():
         declare_use_simulator_cmd,
         declare_use_gazebo_gui_cmd,
         declare_world_cmd,
+        declare_use_loc_cam_cmd,
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')),
@@ -122,6 +135,17 @@ def generate_launch_description():
                                      'use_gazebo_gui': use_gazebo_gui,
                                      'robot_description': robot_description
                                  }.items()),
+
+        # GroupAction([
+        #     PushRosNamespace(condition=IfCondition(use_loc_cam),
+        #                      namespace='loc_cam'),
+        #     IncludeLaunchDescription(PythonLaunchDescriptionSource(
+        #         os.path.join(stereo_image_proc_launch_dir, 'stereo_image_proc.launch.py'))),
+        # ]),
+
+        # IncludeLaunchDescription(PythonLaunchDescriptionSource(
+        #     os.path.join(stereo_image_proc_launch_dir, 'stereo_image_proc.launch.py'))),
+
 
         Node(
             condition=IfCondition(use_rviz),

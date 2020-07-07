@@ -5,7 +5,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument  # , SetEnvironmentVariable
-# from launch.conditions import IfCondition
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 
 from launch_helpers import to_urdf
@@ -32,31 +32,37 @@ def generate_launch_description():
     urdf_model_path = to_urdf(xacro_model_path)
 
     # Create the launch configuration variables
-    namespace = LaunchConfiguration('namespace')
-    use_sim_time = LaunchConfiguration('use_sim_time')
     config_file = LaunchConfiguration('config_file')
+    namespace = LaunchConfiguration('namespace')
     robot_description = LaunchConfiguration('robot_description')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    use_ptu = LaunchConfiguration('use_ptu')
 
     # Launch declarations
+    declare_config_file_cmd = DeclareLaunchArgument(
+        'config_file',
+        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
+        description='Full path to the ROS2 parameters file to use for all launched nodes')
+
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
         default_value='',
         description='Top-level namespace')
+
+    declare_robot_description_cmd = DeclareLaunchArgument(
+        'robot_description',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='False',
         description='Use simulation (Gazebo) clock if true')
 
-    declare_config_file_cmd = DeclareLaunchArgument(
-        'config_file',
-        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
-        description='Full path to the ROS2 parameters file to use for all launched nodes')
-
-    declare_robot_description_cmd = DeclareLaunchArgument(
-        'robot_description',
-        default_value=urdf_model_path,
-        description='Full path to robot urdf file.')
+    declare_use_ptu_cmd = DeclareLaunchArgument(
+        'use_ptu',
+        default_value='True',
+        description='Whether to start the PTU controller')
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
@@ -71,10 +77,11 @@ def generate_launch_description():
 
     return LaunchDescription([
         # Launch Arguments
-        declare_namespace_cmd,
-        declare_use_sim_time_cmd,
         declare_config_file_cmd,
+        declare_namespace_cmd,
         declare_robot_description_cmd,
+        declare_use_sim_time_cmd,
+        declare_use_ptu_cmd,
 
         # Nodes
         Node(
@@ -142,6 +149,16 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
+            parameters=[configured_params]
+        ),
+        Node(
+            condition=IfCondition(use_ptu),
+            package='ptu_control',
+            node_namespace=namespace_,
+            node_executable='ptu_control_node',
+            node_name='ptu_control_node',
+            output='screen',
+            emulate_tty=True,
             parameters=[configured_params]
         )
     ])
