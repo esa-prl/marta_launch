@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, GroupAction,
+from launch.actions import (DeclareLaunchArgument,
                             IncludeLaunchDescription, SetEnvironmentVariable)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -11,14 +11,13 @@ from launch.substitutions import LaunchConfiguration
 
 from launch_helpers import to_urdf
 
-from launch_ros.actions import Node, PushRosNamespace
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
 
     marta_launch_dir = os.path.join(get_package_share_directory('marta_launch'), 'launch')
     rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
-    stereo_image_proc_launch_dir = os.path.join(get_package_share_directory('stereo_image_proc'), 'launch')
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
@@ -31,6 +30,8 @@ def generate_launch_description():
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
     world = LaunchConfiguration('world')
     use_loc_cam = LaunchConfiguration('use_loc_cam')
+    stereo_cam_name = LaunchConfiguration('stereo_cam_name')
+    use_stereo_view = LaunchConfiguration('use_stereo_view')
 
     # ## ROBOT MODEL
     # Load XACRO and parse to URDF
@@ -96,10 +97,15 @@ def generate_launch_description():
         default_value='True',
         description='Whether to process loc_cam data.)')
 
-    declare_loc_cam_name_cmd = DeclareLaunchArgument(
-        'loc_cam_name',
-        default_value='loc_cam',
-        description='Name of loc_cam.)')
+    declare_stereo_cam_name_cmd = DeclareLaunchArgument(
+        'stereo_cam_name',
+        default_value='/loc_cam',
+        description='Name of the stereo cam to be used.')
+
+    declare_use_stereo_view_cmd = DeclareLaunchArgument(
+        'use_stereo_view',
+        default_value='True',
+        description='Option to display stereo images.')
 
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
@@ -116,6 +122,8 @@ def generate_launch_description():
         declare_use_gazebo_gui_cmd,
         declare_world_cmd,
         declare_use_loc_cam_cmd,
+        declare_stereo_cam_name_cmd,
+        declare_use_stereo_view_cmd,
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')),
@@ -136,16 +144,8 @@ def generate_launch_description():
                                      'robot_description': robot_description
                                  }.items()),
 
-        # GroupAction([
-        #     PushRosNamespace(condition=IfCondition(use_loc_cam),
-        #                      namespace='loc_cam'),
-        #     IncludeLaunchDescription(PythonLaunchDescriptionSource(
-        #         os.path.join(stereo_image_proc_launch_dir, 'stereo_image_proc.launch.py'))),
-        # ]),
-
-        # IncludeLaunchDescription(PythonLaunchDescriptionSource(
-        #     os.path.join(stereo_image_proc_launch_dir, 'stereo_image_proc.launch.py'))),
-
+        IncludeLaunchDescription(PythonLaunchDescriptionSource(
+                os.path.join(marta_launch_dir, 'stereo_image_proc.launch.py')),),
 
         Node(
             condition=IfCondition(use_rviz),
