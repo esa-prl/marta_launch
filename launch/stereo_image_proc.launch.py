@@ -65,14 +65,14 @@ def generate_launch_description():
         ),
 
         ComposableNodeContainer(
-            package='rclcpp_components', node_executable='component_container',
-            node_name='stereo_image_proc_container', node_namespace='',
+            package='rclcpp_components', executable='component_container',
+            name='stereo_image_proc_container', namespace='',
             composable_node_descriptions=[
                 ComposableNode(
                     package='stereo_image_proc',
                     node_plugin='stereo_image_proc::DisparityNode',
-                    node_name='disparity_node',
-                    node_namespace=stereo_cam_name,
+                    name='disparity_node',
+                    namespace=stereo_cam_name,
                     remappings=[
                         ('left/image_rect', 'left/image_raw'),
                         ('right/image_rect', 'right/image_raw'),
@@ -85,8 +85,8 @@ def generate_launch_description():
                 ComposableNode(
                     package='stereo_image_proc',
                     node_plugin='stereo_image_proc::PointCloudNode',
-                    node_name='point_cloud_node',
-                    node_namespace=stereo_cam_name,
+                    name='point_cloud_node',
+                    namespace=stereo_cam_name,
                     remappings=[
                         ('left/image_rect_color', 'left/image_raw')
                     ],
@@ -101,8 +101,8 @@ def generate_launch_description():
         Node(
             condition=IfCondition(use_stereo_view),
             package='image_view',
-            node_executable='stereo_view',
-            node_name='stereo_view_node',
+            executable='stereo_view',
+            name='stereo_view_node',
             arguments=['raw'],
             remappings=[
                     ('/stereo/disparity',   [stereo_cam_name, '/disparity']),

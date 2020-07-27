@@ -87,9 +87,9 @@ def generate_launch_description():
     # Spawn rover
     spawn_rover_cmd = Node(
         package='gazebo_ros',
-        node_executable='spawn_entity.py',
-        node_name='spawn_entity',
-        node_namespace=namespace_,
+        executable='spawn_entity.py',
+        name='spawn_entity',
+        namespace=namespace_,
         output='screen',
         emulate_tty=True,
         arguments=['-entity',
@@ -101,8 +101,8 @@ def generate_launch_description():
 
     # Static tf from odom to base_link
     odom_to_base_link_cmd = Node(package='tf2_ros',
-                                 node_executable='static_transform_publisher',
-                                 node_name='base_link_broadcaster',
+                                 executable='static_transform_publisher',
+                                 name='base_link_broadcaster',
                                  arguments=['0', '0', '0.0', '0', '0', '0', 'odom', 'base_link'],
                                  parameters=[{'use_sim_time': use_sim_time}])
 

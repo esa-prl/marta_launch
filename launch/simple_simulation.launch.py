@@ -26,6 +26,7 @@ def generate_launch_description():
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
     rviz_config_file = LaunchConfiguration('rviz_config_file')
+    urdf_path = LaunchConfiguration('urdf_path')
     use_rviz = LaunchConfiguration('use_rviz')
 
     # ## ROBOT MODEL
@@ -34,7 +35,7 @@ def generate_launch_description():
     xacro_model_path = os.path.join(rover_config_dir, 'urdf', xacro_model_name)
 
     # Parse XACRO file to URDF
-    urdf_model_path = to_urdf(xacro_model_path)
+    urdf_model_path, robot_desc = to_urdf(xacro_model_path)
 
     # Launch declarations
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -52,9 +53,14 @@ def generate_launch_description():
         default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
+    declare_urdf_path_cmd = DeclareLaunchArgument(
+        'urdf_path',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
+
     declare_robot_description_cmd = DeclareLaunchArgument(
         'robot_description',
-        default_value=urdf_model_path,
+        default_value=robot_desc,
         description='Full path to robot urdf file.')
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
@@ -89,6 +95,7 @@ def generate_launch_description():
         declare_robot_description_cmd,
         declare_rviz_config_file_cmd,
         declare_use_rviz_cmd,
+        declare_urdf_path_cmd,
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')),
@@ -101,23 +108,23 @@ def generate_launch_description():
 
         Node(
             package='joint_state_publisher',
-            node_executable='joint_state_publisher',
-            node_name='joint_state_publisher_node',
+            executable='joint_state_publisher',
+            name='joint_state_publisher_node',
             output='screen',
             parameters=[configured_params]
         ),
         Node(
             package='simple_joint_simulation',
-            node_executable='simple_joint_simulation_node',
-            node_name='simple_joint_simulation_node',
+            executable='simple_joint_simulation_node',
+            name='simple_joint_simulation_node',
             output='screen',
             parameters=[configured_params]
         ),
         Node(
             condition=IfCondition(use_rviz),
             package='rviz2',
-            node_executable='rviz2',
-            node_name='rviz2',
+            executable='rviz2',
+            name='rviz2',
             arguments=['-d', rviz_config_file],
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}],
