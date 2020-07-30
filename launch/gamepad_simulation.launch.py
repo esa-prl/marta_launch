@@ -120,6 +120,7 @@ def generate_launch_description():
                                      'use_sim_time': use_sim_time,
                                      'use_simulator': use_simulator,
                                      'use_gazebo_gui': use_gazebo_gui,
+                                     'config_file': config_file,
                                      'robot_description': robot_description
                                  }.items()),
 
