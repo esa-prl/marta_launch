@@ -13,6 +13,7 @@ from launch_helpers import to_urdf
 
 from launch_ros.actions import Node
 
+from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
 
@@ -37,28 +38,34 @@ def generate_launch_description():
     urdf_model_path, robot_desc = to_urdf(xacro_model)
 
     # Create the launch configuration variables
+    config_file = LaunchConfiguration('config_file')
     namespace = LaunchConfiguration('namespace')
+    robot_description = LaunchConfiguration('robot_description')
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
     urdf_path = LaunchConfiguration('urdf_path')
-    robot_description = LaunchConfiguration('robot_description')
     world = LaunchConfiguration('world')
 
     # Create the launch declarations
+    declare_config_file_cmd = DeclareLaunchArgument(
+        'config_file',
+        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
+        description='Full path to the ROS2 parameters file to use for all launched nodes')
+
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
         default_value=namespace_,
         description='Top-level namespace')
 
-    declare_urdf_path_cmd = DeclareLaunchArgument(
-        'urdf_path',
-        default_value=urdf_model_path,
-        description='Full path to robot urdf file.')
-
     declare_robot_description_cmd = DeclareLaunchArgument(
         'robot_description',
         default_value=robot_desc,
+        description='Full path to robot urdf file.')
+
+    declare_urdf_path_cmd = DeclareLaunchArgument(
+        'urdf_path',
+        default_value=urdf_model_path,
         description='Full path to robot urdf file.')
 
 
@@ -81,6 +88,17 @@ def generate_launch_description():
         'world',
         default_value=[world_3, ''],
         description='SDF world file')
+
+    # Create our own temporary YAML files that include substitutions
+    param_substitutions = {
+        'use_sim_time': use_sim_time,
+        'robot_description': robot_description}
+
+    configured_params = RewrittenYaml(
+        source_file=config_file,
+        root_key=namespace,
+        param_rewrites=param_substitutions,
+        convert_types=True)
 
     # Gazebo launch
     # Starts the gzserver (handles computations) and gzclient (handles visualization)
@@ -106,6 +124,15 @@ def generate_launch_description():
                    '-reference_frame', 'world']
     )
 
+    # Node to convert odometry message to tf message
+    odom_to_tf_cmd = Node(
+        package='odom_to_tf',
+        executable='odom_to_tf_node',
+        name='odom_to_tf_node',
+        output='screen',
+        parameters=[configured_params],
+    )
+
     # Static tf from odom to base_link
     odom_to_base_link_cmd = Node(package='tf2_ros',
                                  executable='static_transform_publisher',
@@ -117,13 +144,14 @@ def generate_launch_description():
         # Launch Arguments
         declare_namespace_cmd,
         declare_robot_description_cmd,
+        declare_urdf_path_cmd,
+        declare_use_gazebo_gui_cmd,
         declare_use_sim_time_cmd,
         declare_use_simulator_cmd,
-        declare_use_gazebo_gui_cmd,
-        declare_urdf_path_cmd,
         declare_world_cmd,
         # Start Nodes
         gazebo_cmd,
         spawn_rover_cmd,
+        odom_to_tf_cmd,
         odom_to_base_link_cmd
     ])

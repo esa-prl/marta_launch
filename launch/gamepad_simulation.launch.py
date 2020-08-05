@@ -97,7 +97,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+        # SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
 
         # Parameter Declarations
         declare_namespace_cmd,
@@ -127,6 +127,7 @@ def generate_launch_description():
                                      'use_sim_time': use_sim_time,
                                      'use_simulator': use_simulator,
                                      'use_gazebo_gui': use_gazebo_gui,
+                                     'config_file': config_file,
                                      'robot_description': robot_description
                                  }.items()),
 
