@@ -57,9 +57,9 @@ def generate_launch_description():
     # Spawn rover
     spawn_rover = Node(
         package='gazebo_ros',
-        node_executable='spawn_entity.py',
-        node_name='spawn_entity',
-        node_namespace=namespace_,
+        executable='spawn_entity.py',
+        name='spawn_entity',
+        namespace=namespace_,
         output='screen',
         emulate_tty=True,
         arguments=['-entity',
@@ -72,9 +72,9 @@ def generate_launch_description():
     # Launch robot_state_publisher to publish the robot description and convert joint_states to tf messages
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
-        node_namespace=namespace_,
-        node_executable='robot_state_publisher',
-        node_name='robot_state_publisher_node',
+        namespace=namespace_,
+        executable='robot_state_publisher',
+        name='robot_state_publisher_node',
         remappings=[
                 ('/joint_states', '/{}/joint_states'.format(namespace_))
         ],
@@ -94,9 +94,9 @@ def generate_launch_description():
         robot_state_publisher_node,
         Node(
             package='joy',
-            node_namespace=namespace_,
-            node_executable='joy_node',
-            node_name='joy_node',
+            namespace=namespace_,
+            executable='joy_node',
+            name='joy_node',
             remappings=[
                     ('joy', 'gamepad')
             ],
@@ -105,27 +105,27 @@ def generate_launch_description():
         ),
         Node(
             package='gamepad_parser',
-            node_namespace=namespace_,
-            node_executable='gamepad_parser_node',
-            node_name='gamepad_parser_node',
+            namespace=namespace_,
+            executable='gamepad_parser_node',
+            name='gamepad_parser_node',
             output='screen',
             parameters=[gamepad_parser_config_ns],
             emulate_tty=True
         ),
         Node(
             package='locomotion_manager',
-            node_namespace=namespace_,
-            node_executable='locomotion_manager_node',
-            node_name='locomotion_manager_node',
+            namespace=namespace_,
+            executable='locomotion_manager_node',
+            name='locomotion_manager_node',
             output='screen',
             parameters=[locomotion_manager_config_ns],
             emulate_tty=True
         ),
         Node(
             package='locomotion_mode',
-            node_namespace=namespace_,
-            node_executable='stop_mode_node',
-            node_name='stop_mode_node',
+            namespace=namespace_,
+            executable='stop_mode_node',
+            name='stop_mode_node',
             output='screen',
             emulate_tty=True,
             # Parameters can be passed as dict or path to the .yaml
@@ -133,9 +133,9 @@ def generate_launch_description():
         ),
         Node(
             package='simple_rover_locomotion',
-            node_namespace=namespace_,
-            node_executable='simple_rover_locomotion_node',
-            node_name='simple_rover_locomotion_node',
+            namespace=namespace_,
+            executable='simple_rover_locomotion_node',
+            name='simple_rover_locomotion_node',
             output='screen',
             emulate_tty=True,
             parameters=[urdf_params, simple_rover_locomotion_config_ns]
