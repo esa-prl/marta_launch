@@ -24,6 +24,7 @@ def generate_launch_description():
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
     rviz_config_file = LaunchConfiguration('rviz_config_file')
+    urdf_path = LaunchConfiguration('urdf_path')
     use_rviz = LaunchConfiguration('use_rviz')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
@@ -36,7 +37,7 @@ def generate_launch_description():
 
     # Parse XACRO file to URDF
     # TODO: Use LaunchConfigurations arguments to set parameters in URDF. How can the parameters be read out here???
-    urdf_model_path = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
+    urdf_model_path, robot_desc = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
 
     # Launch declarations
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -54,9 +55,14 @@ def generate_launch_description():
         default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
+    declare_urdf_path_cmd = DeclareLaunchArgument(
+        'urdf_path',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
+
     declare_robot_description_cmd = DeclareLaunchArgument(
         'robot_description',
-        default_value=urdf_model_path,
+        default_value=robot_desc,
         description='Full path to robot urdf file.')
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
@@ -91,7 +97,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+        # SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
 
         # Parameter Declarations
         declare_namespace_cmd,
@@ -99,6 +105,7 @@ def generate_launch_description():
         declare_config_file_cmd,
         declare_robot_description_cmd,
         declare_rviz_config_file_cmd,
+        declare_urdf_path_cmd,
         declare_use_rviz_cmd,
         declare_use_simulator_cmd,
         declare_use_gazebo_gui_cmd,
@@ -127,8 +134,8 @@ def generate_launch_description():
         Node(
             condition=IfCondition(use_rviz),
             package='rviz2',
-            node_executable='rviz2',
-            node_name='rviz2',
+            executable='rviz2',
+            name='rviz2',
             arguments=['-d', rviz_config_file],
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}],

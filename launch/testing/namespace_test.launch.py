@@ -27,9 +27,9 @@ def generate_launch_description():
 
     gamepad_parser_cmd = Node(
         package='gamepad_parser',
-        node_namespace=namespace,
-        node_executable='gamepad_parser_node',
-        node_name='gamepad_parser_node',
+        namespace=namespace,
+        executable='gamepad_parser_node',
+        name='gamepad_parser_node',
         output='screen',
         emulate_tty=True)
 

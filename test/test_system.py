@@ -51,9 +51,9 @@ def generate_test_description():
 
     gamepad_parser_node = Node(
         package='gamepad_parser',
-        node_namespace=namespace_,
-        node_executable='gamepad_parser_node',
-        node_name='gamepad_parser_node',
+        namespace=namespace_,
+        executable='gamepad_parser_node',
+        name='gamepad_parser_node',
         output='screen',
         parameters=[gamepad_parser_config_ns],
         emulate_tty=True
@@ -61,9 +61,9 @@ def generate_test_description():
 
     locomotion_manager_node = Node(
         package='locomotion_manager',
-        node_namespace=namespace_,
-        node_executable='locomotion_manager_node',
-        node_name='locomotion_manager_node',
+        namespace=namespace_,
+        executable='locomotion_manager_node',
+        name='locomotion_manager_node',
         output='screen',
         parameters=[locomotion_manager_config_ns],
         emulate_tty=True
@@ -71,9 +71,9 @@ def generate_test_description():
 
     stop_mode_node = Node(
         package='locomotion_mode',
-        node_namespace=namespace_,
-        node_executable='stop_mode_node',
-        node_name='stop_mode_node',
+        namespace=namespace_,
+        executable='stop_mode_node',
+        name='stop_mode_node',
         output='screen',
         parameters=[urdf_params, stop_mode_config_ns],
         emulate_tty=True
@@ -81,9 +81,9 @@ def generate_test_description():
 
     simple_rover_locomotion_node = Node(
         package='simple_rover_locomotion',
-        node_namespace=namespace_,
-        node_executable='simple_rover_locomotion_node',
-        node_name='simple_rover_locomotion_node',
+        namespace=namespace_,
+        executable='simple_rover_locomotion_node',
+        name='simple_rover_locomotion_node',
         output='screen',
         emulate_tty=True,
         # Parameters can be passed as dict or path to the .yaml

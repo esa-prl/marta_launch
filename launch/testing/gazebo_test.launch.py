@@ -50,9 +50,9 @@ def generate_launch_description():
     # Spawn rover
     spawn_rover_cmd = Node(
         package='gazebo_ros',
-        node_executable='spawn_entity.py',
-        node_name='spawn_entity',
-        node_namespace=namespace_,
+        executable='spawn_entity.py',
+        name='spawn_entity',
+        namespace=namespace_,
         output='screen',
         emulate_tty=True,
         arguments=['-entity',

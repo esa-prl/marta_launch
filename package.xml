@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>Contains launch files of MaRTA.</description>
   <maintainer email="miro.voellmy@esa.int">Miro Voellmy</maintainer>
-  <license>TODO: License declaration</license>
+  <license>GPLv3</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -26,7 +26,6 @@
   <exec_depend>rover_config</exec_depend>
   <exec_depend>rover_gazebo_plugins</exec_depend>
   <exec_depend>rover_msgs</exec_depend>
-  <exec_depend>rover_simulation</exec_depend>
   <exec_depend>simple_joint_simulation</exec_depend>
   <exec_depend>simple_rover_locomotion</exec_depend>
   <exec_depend>tf2_ros</exec_depend>

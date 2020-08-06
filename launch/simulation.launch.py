@@ -35,18 +35,24 @@ def generate_launch_description():
     # Create urdf file from xacro and gazebo file from the package rover_config
     pkg_rover_config = get_package_share_directory('rover_config')
     xacro_model = os.path.join(pkg_rover_config, 'urdf', 'marta.xacro')
-    urdf_model_path = to_urdf(xacro_model)
+    urdf_model_path, robot_desc = to_urdf(xacro_model)
 
     # Create the launch configuration variables
+    config_file = LaunchConfiguration('config_file')
     namespace = LaunchConfiguration('namespace')
+    robot_description = LaunchConfiguration('robot_description')
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
-    config_file = LaunchConfiguration('config_file')
-    robot_description = LaunchConfiguration('robot_description')
+    urdf_path = LaunchConfiguration('urdf_path')
     world = LaunchConfiguration('world')
 
     # Create the launch declarations
+    declare_config_file_cmd = DeclareLaunchArgument(
+        'config_file',
+        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
+        description='Full path to the ROS2 parameters file to use for all launched nodes')
+
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
         default_value=namespace_,
@@ -54,8 +60,14 @@ def generate_launch_description():
 
     declare_robot_description_cmd = DeclareLaunchArgument(
         'robot_description',
+        default_value=robot_desc,
+        description='Full path to robot urdf file.')
+
+    declare_urdf_path_cmd = DeclareLaunchArgument(
+        'urdf_path',
         default_value=urdf_model_path,
         description='Full path to robot urdf file.')
+
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
@@ -71,11 +83,6 @@ def generate_launch_description():
         'use_gazebo_gui',
         default_value='True',
         description='Whether to execute gzclient)')
-
-    declare_config_file_cmd = DeclareLaunchArgument(
-        'config_file',
-        default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
-        description='Full path to the ROS2 parameters file to use for all launched nodes')
 
     declare_world_cmd = DeclareLaunchArgument(
         'world',
@@ -105,42 +112,43 @@ def generate_launch_description():
     # Spawn rover
     spawn_rover_cmd = Node(
         package='gazebo_ros',
-        node_executable='spawn_entity.py',
-        node_name='spawn_entity',
-        node_namespace=namespace_,
+        executable='spawn_entity.py',
+        name='spawn_entity',
+        namespace=namespace_,
         output='screen',
         emulate_tty=True,
         arguments=['-entity',
                    'marta',
                    '-x', '1.5', '-y', '1', '-z', '2',
-                   '-file', robot_description,
+                   '-file', urdf_model_path,
                    '-reference_frame', 'world']
     )
 
     # Node to convert odometry message to tf message
     odom_to_tf_cmd = Node(
         package='odom_to_tf',
-        node_executable='odom_to_tf_node',
-        node_name='odom_to_tf_node',
+        executable='odom_to_tf_node',
+        name='odom_to_tf_node',
         output='screen',
         parameters=[configured_params],
     )
 
     # Static tf from odom to base_link
     odom_to_base_link_cmd = Node(package='tf2_ros',
-                                 node_executable='static_transform_publisher',
-                                 node_name='base_link_broadcaster',
+                                 executable='static_transform_publisher',
+                                 name='base_link_broadcaster',
                                  arguments=['0', '0', '0.0', '0', '0', '0', 'odom', 'base_link'],
                                  parameters=[{'use_sim_time': use_sim_time}])
 
     return LaunchDescription([
         # Launch Arguments
         declare_namespace_cmd,
+        declare_robot_description_cmd,
+        declare_urdf_path_cmd,
+        declare_use_gazebo_gui_cmd,
         declare_use_sim_time_cmd,
         declare_use_simulator_cmd,
-        declare_use_gazebo_gui_cmd,
         declare_world_cmd,
-        declare_robot_description_cmd,
         # Start Nodes
         gazebo_cmd,
         spawn_rover_cmd,
