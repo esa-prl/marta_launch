@@ -143,6 +143,7 @@ def generate_launch_description():
     return LaunchDescription([
         # Launch Arguments
         declare_namespace_cmd,
+        declare_config_file_cmd,
         declare_robot_description_cmd,
         declare_urdf_path_cmd,
         declare_use_gazebo_gui_cmd,
