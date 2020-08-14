@@ -19,7 +19,6 @@ def generate_launch_description():
     rover_config_dir = get_package_share_directory('rover_config')
 
     # Launch configurations
-    namespace = LaunchConfiguration('namespace')
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
     rviz_config_file = LaunchConfiguration('rviz_config_file')
@@ -36,11 +35,6 @@ def generate_launch_description():
     urdf_model_path, robot_desc = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
 
     # Launch declarations
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Top-level namespace')
-
     declare_config_file_cmd = DeclareLaunchArgument(
         'config_file',
         default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
@@ -71,7 +65,6 @@ def generate_launch_description():
         # SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
 
         # Parameter Declarations
-        declare_namespace_cmd,
         declare_config_file_cmd,
         declare_robot_description_cmd,
         declare_rviz_config_file_cmd,
@@ -82,12 +75,7 @@ def generate_launch_description():
             os.path.join(marta_launch_dir, 'platform_driver_ethercat.launch.py'))),
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-                                 launch_arguments={
-                                     'namespace': namespace,
-                                     'config_file': config_file,
-                                     'robot_description': robot_description
-                                 }.items()),
+            os.path.join(marta_launch_dir, 'locomotion.launch.py'))),
 
         Node(
             condition=IfCondition(use_rviz),

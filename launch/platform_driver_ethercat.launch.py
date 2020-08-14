@@ -14,11 +14,11 @@ def generate_launch_description():
     pd_config_dir = os.path.join(get_package_share_directory('platform_driver_ethercat_ros2'), 'config')
 
     # Launch configurations
-    pd_config_file = LaunchConfiguration('pd_config_file')
+    pd_config_file_name = LaunchConfiguration('pd_config_file_name')
 
     # Launch declarations
-    declare_pd_config_file_cmd = DeclareLaunchArgument(
-        'pd_config_file',
+    declare_pd_config_file_path_cmd = DeclareLaunchArgument(
+        'pd_config_file_path',
         default_value=os.path.join(pd_config_dir, 'marta.yaml'),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
@@ -30,7 +30,7 @@ def generate_launch_description():
             name = 'platform_driver_ethercat_node',
             output = 'screen',
             # arguments = ['--ros-args', '--log-level', 'debug'],
-            parameters = [{'config_file': pd_config_file}]
+            parameters = [{'config_file': pd_config_file_name}]
     )
 
     # Make the pd node take the 'configure' transition
@@ -61,7 +61,7 @@ def generate_launch_description():
 
     ld = launch.LaunchDescription()
 
-    ld.add_action(declare_pd_config_file_cmd)
+    ld.add_action(declare_pd_config_file_path_cmd)
     ld.add_action(pd_inactive_state_handler)
     ld.add_action(pd_node)
     ld.add_action(pd_configure_event)

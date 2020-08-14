@@ -21,7 +21,6 @@ def generate_launch_description():
     rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
 
     # Launch configurations
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
@@ -38,11 +37,6 @@ def generate_launch_description():
     urdf_model_path, robot_desc = to_urdf(xacro_model_path)
 
     # Launch declarations
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Top-level namespace')
-
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='False',
@@ -80,16 +74,17 @@ def generate_launch_description():
 
     configured_params = RewrittenYaml(
         source_file=config_file,
-        root_key=namespace,
+        root_key='',
         param_rewrites=param_substitutions,
         convert_types=True)
 
     return LaunchDescription([
-        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
         # Parameter Declarations
-        declare_namespace_cmd,
         declare_use_sim_time_cmd,
         declare_config_file_cmd,
         declare_robot_description_cmd,

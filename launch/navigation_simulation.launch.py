@@ -116,16 +116,10 @@ def generate_launch_description():
 
     # Specify the actions
     locomotion_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-        launch_arguments={'namespace': namespace,
-                          'use_sim_time': use_sim_time}.items())
+        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'locomotion.launch.py')))
 
     simulation_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'simulation.launch.py')),
-        launch_arguments={'namespace': namespace,
-                          'use_sim_time': use_sim_time,
-                          'use_simulator': use_simulator,
-                          'use_gazebo_gui': use_gazebo_gui}.items())
+        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'simulation.launch.py')))
 
     # Start Nav2 Stack
     bringup_cmd = IncludeLaunchDescription(
@@ -144,8 +138,6 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         arguments=['-d', rviz_config_file],
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static'),
                     ('goal_pose', 'goal_pose'),
