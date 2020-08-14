@@ -18,9 +18,6 @@ from nav2_common.launch import RewrittenYaml
 def generate_launch_description():
     """Launch description."""
 
-    # emulate_tty is needed to ouput the WARN, ERROR in colors.
-    emulate_tty = True
-
     # Get the directories
     rover_config_dir = get_package_share_directory('rover_config')
 
@@ -79,6 +76,11 @@ def generate_launch_description():
         convert_types=True)
 
     return LaunchDescription([
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
+
         # Launch Arguments
         declare_config_file_cmd,
         declare_urdf_path_cmd,
@@ -93,7 +95,6 @@ def generate_launch_description():
             name='robot_state_publisher_node',
             remappings=[('/joint_states', '/joint_states')],
             parameters=[configured_params],
-            emulate_tty=emulate_tty
         ),
         Node(
             package='joy',
@@ -103,7 +104,6 @@ def generate_launch_description():
                     ('joy', 'gamepad')
             ],
             parameters=[configured_params],
-            emulate_tty=emulate_tty
         ),
         Node(
             package='gamepad_parser',
@@ -111,21 +111,18 @@ def generate_launch_description():
             name='gamepad_parser_node',
             remappings=[('/rover_motion_cmd', '/cmd_vel')],
             parameters=[configured_params],
-            emulate_tty=emulate_tty
         ),
         Node(
             package='locomotion_manager',
             executable='locomotion_manager_node',
             name='locomotion_manager_node',
             parameters=[configured_params],
-            emulate_tty=emulate_tty
         ),
         Node(
             package='simple_rover_locomotion',
             executable='simple_rover_locomotion_node',
             name='simple_rover_locomotion_node',
             remappings=[('/rover_motion_cmd', '/cmd_vel')],
-            emulate_tty=emulate_tty,
             # Parameters can be passed as dict or path to the .yaml
             parameters=[configured_params]
         ),
@@ -134,7 +131,6 @@ def generate_launch_description():
             executable='stop_mode_node',
             name='stop_mode_node',
             remappings=[('/rover_motion_cmd', '/cmd_vel')],
-            emulate_tty=emulate_tty,
             # Parameters can be passed as dict or path to the .yaml
             parameters=[configured_params]
         ),
@@ -143,7 +139,6 @@ def generate_launch_description():
             package='ptu_control',
             executable='ptu_control_node',
             name='ptu_control_node',
-            emulate_tty=emulate_tty,
             parameters=[configured_params]
         )
     ])
