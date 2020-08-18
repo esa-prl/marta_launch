@@ -40,7 +40,7 @@ def generate_launch_description():
     declare_config_file_cmd = DeclareLaunchArgument(
         'config_file',
         default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
-        description='Full path to the ROS2 parameters file to use for all launched nodes')
+        description='Full path to the ROS2 parameters file to use for all launched nodes.')
 
     declare_urdf_path_cmd = DeclareLaunchArgument(
         'urdf_path',
@@ -87,9 +87,7 @@ def generate_launch_description():
         package='joy',
         executable='joy_node',
         name='joy_node',
-        remappings=[
-                ('joy', 'gamepad')
-        ],
+        remappings=[('joy', 'gamepad')],
         parameters=[configured_params],
     )
 
@@ -114,7 +112,7 @@ def generate_launch_description():
         name='simple_rover_locomotion_node',
         remappings=[('/rover_motion_cmd', '/cmd_vel')],
         # Parameters can be passed as dict or path to the .yaml
-        parameters=[configured_params]
+        parameters=[configured_params],
     )
 
     stop_mode_cmd = Node(
@@ -123,7 +121,7 @@ def generate_launch_description():
         name='stop_mode_node',
         remappings=[('/rover_motion_cmd', '/cmd_vel')],
         # Parameters can be passed as dict or path to the .yaml
-        parameters=[configured_params]
+        parameters=[configured_params],
     )
 
     ptu_control_cmd = Node(
@@ -131,7 +129,7 @@ def generate_launch_description():
         package='ptu_control',
         executable='ptu_control_node',
         name='ptu_control_node',
-        parameters=[configured_params]
+        parameters=[configured_params],
     )
 
 

@@ -22,7 +22,7 @@ def generate_launch_description():
     declare_pd_config_file_path_cmd = DeclareLaunchArgument(
         'pd_config_file_path',
         default_value=os.path.join(pd_config_dir, 'marta.yaml'),
-        description='Full path to the ROS2 parameters file to use for all launched nodes')
+        description='Full path to the ROS2 parameters file to use for all launched nodes.')
 
 
     # Create pd node
