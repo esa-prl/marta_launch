@@ -75,6 +75,66 @@ def generate_launch_description():
         param_rewrites=param_substitutions,
         convert_types=True)
 
+    robot_state_pub_cmd = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher_node',
+        remappings=[('/joint_states', '/joint_states')],
+        parameters=[configured_params]
+    )
+
+    joy_cmd = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        remappings=[
+                ('joy', 'gamepad')
+        ],
+        parameters=[configured_params],
+    )
+
+    gamepad_parser_cmd = Node(
+        package='gamepad_parser',
+        executable='gamepad_parser_node',
+        name='gamepad_parser_node',
+        remappings=[('/rover_motion_cmd', '/cmd_vel')],
+        parameters=[configured_params],
+    )
+
+    locomotion_manager_cmd = Node(
+        package='locomotion_manager',
+        executable='locomotion_manager_node',
+        name='locomotion_manager_node',
+        parameters=[configured_params],
+    )
+
+    simple_rover_locomotion_cmd = Node(
+        package='simple_rover_locomotion',
+        executable='simple_rover_locomotion_node',
+        name='simple_rover_locomotion_node',
+        remappings=[('/rover_motion_cmd', '/cmd_vel')],
+        # Parameters can be passed as dict or path to the .yaml
+        parameters=[configured_params]
+    )
+
+    stop_mode_cmd = Node(
+        package='locomotion_mode',
+        executable='stop_mode_node',
+        name='stop_mode_node',
+        remappings=[('/rover_motion_cmd', '/cmd_vel')],
+        # Parameters can be passed as dict or path to the .yaml
+        parameters=[configured_params]
+    )
+
+    ptu_control_cmd = Node(
+        condition=IfCondition(use_ptu),
+        package='ptu_control',
+        executable='ptu_control_node',
+        name='ptu_control_node',
+        parameters=[configured_params]
+    )
+
+
     return LaunchDescription([
         # Set env var to print messages to stdout immediately
         SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
@@ -88,57 +148,12 @@ def generate_launch_description():
         declare_use_sim_time_cmd,
         declare_use_ptu_cmd,
 
-        # Nodes
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher_node',
-            remappings=[('/joint_states', '/joint_states')],
-            parameters=[configured_params],
-        ),
-        Node(
-            package='joy',
-            executable='joy_node',
-            name='joy_node',
-            remappings=[
-                    ('joy', 'gamepad')
-            ],
-            parameters=[configured_params],
-        ),
-        Node(
-            package='gamepad_parser',
-            executable='gamepad_parser_node',
-            name='gamepad_parser_node',
-            remappings=[('/rover_motion_cmd', '/cmd_vel')],
-            parameters=[configured_params],
-        ),
-        Node(
-            package='locomotion_manager',
-            executable='locomotion_manager_node',
-            name='locomotion_manager_node',
-            parameters=[configured_params],
-        ),
-        Node(
-            package='simple_rover_locomotion',
-            executable='simple_rover_locomotion_node',
-            name='simple_rover_locomotion_node',
-            remappings=[('/rover_motion_cmd', '/cmd_vel')],
-            # Parameters can be passed as dict or path to the .yaml
-            parameters=[configured_params]
-        ),
-        Node(
-            package='locomotion_mode',
-            executable='stop_mode_node',
-            name='stop_mode_node',
-            remappings=[('/rover_motion_cmd', '/cmd_vel')],
-            # Parameters can be passed as dict or path to the .yaml
-            parameters=[configured_params]
-        ),
-        Node(
-            condition=IfCondition(use_ptu),
-            package='ptu_control',
-            executable='ptu_control_node',
-            name='ptu_control_node',
-            parameters=[configured_params]
-        )
+        # Start Nodes
+        robot_state_pub_cmd,
+        joy_cmd,
+        gamepad_parser_cmd,
+        locomotion_manager_cmd,
+        simple_rover_locomotion_cmd,
+        stop_mode_cmd,
+        ptu_control_cmd
     ])

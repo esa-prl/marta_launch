@@ -6,6 +6,8 @@ import launch
 import launch_ros
 import lifecycle_msgs
 
+from launch import LaunchDescription
+
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
@@ -59,11 +61,10 @@ def generate_launch_description():
         )
     )
 
-    ld = launch.LaunchDescription()
+    return LaunchDescription([
+        declare_pd_config_file_path_cmd,
+        pd_inactive_state_handler,
+        pd_node,
+        pd_configure_event,
 
-    ld.add_action(declare_pd_config_file_path_cmd)
-    ld.add_action(pd_inactive_state_handler)
-    ld.add_action(pd_node)
-    ld.add_action(pd_configure_event)
-
-    return ld
+        ])

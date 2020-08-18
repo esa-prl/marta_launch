@@ -82,6 +82,32 @@ def generate_launch_description():
     start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')))
 
+    joint_state_pub_cmd = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher_node',
+        output='screen',
+        parameters=[configured_params]
+    )
+
+    simple_joint_sim_cmd = Node(
+        package='simple_joint_simulation',
+        executable='simple_joint_simulation_node',
+        name='simple_joint_simulation_node',
+        output='screen',
+        parameters=[configured_params]
+    )
+
+    rviz_cmd = Node(
+        condition=IfCondition(use_rviz),
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_config_file],
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+        remappings=[('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')])
     return LaunchDescription([
         # Set env var to print messages to stdout immediately
         SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
@@ -96,30 +122,9 @@ def generate_launch_description():
         declare_use_rviz_cmd,
         declare_urdf_path_cmd,
 
+        # Start Nodes
         start_locomotion_cmd,
-
-        Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher_node',
-            output='screen',
-            parameters=[configured_params]
-        ),
-        Node(
-            package='simple_joint_simulation',
-            executable='simple_joint_simulation_node',
-            name='simple_joint_simulation_node',
-            output='screen',
-            parameters=[configured_params]
-        ),
-        Node(
-            condition=IfCondition(use_rviz),
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', rviz_config_file],
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}],
-            remappings=[('/tf', 'tf'),
-                        ('/tf_static', 'tf_static')])
+        joint_state_pub_cmd,
+        simple_joint_sim_cmd,
+        rviz_cmd
     ])
