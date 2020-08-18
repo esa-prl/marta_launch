@@ -20,7 +20,6 @@ def generate_launch_description():
     rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
 
     # Launch configurations
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
@@ -42,11 +41,6 @@ def generate_launch_description():
     urdf_model_path = to_urdf(xacro_model_path)
 
     # Launch declarations
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Top-level namespace')
-
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='False',
@@ -107,12 +101,30 @@ def generate_launch_description():
         default_value='True',
         description='Option to display stereo images.')
 
+    start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+        os.path.join(marta_launch_dir, 'locomotion.launch.py')))
+
+    start_simulation_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+        os.path.join(marta_launch_dir, 'simulation.launch.py')))
+
+    start_stereo_image_proc_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+        os.path.join(marta_launch_dir, 'stereo_image_proc.launch.py')),)
+
+    rviz_cmd = Node(
+        condition=IfCondition(use_rviz),
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_config_file],
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+        remappings=[('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')])
     return LaunchDescription([
         # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
         SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
 
         # Parameter Declarations
-        declare_namespace_cmd,
         declare_use_sim_time_cmd,
         declare_config_file_cmd,
         declare_robot_description_cmd,
@@ -125,36 +137,9 @@ def generate_launch_description():
         declare_stereo_cam_name_cmd,
         declare_use_stereo_view_cmd,
 
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-                                 launch_arguments={
-                                     'namespace': namespace,
-                                     'use_sim_time': use_sim_time,
-                                     'config_file': config_file,
-                                     'robot_description': robot_description
-                                 }.items()),
-
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'simulation.launch.py')),
-                                 launch_arguments={
-                                     'namespace': namespace,
-                                     'use_sim_time': use_sim_time,
-                                     'use_simulator': use_simulator,
-                                     'use_gazebo_gui': use_gazebo_gui,
-                                     'robot_description': robot_description
-                                 }.items()),
-
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-                os.path.join(marta_launch_dir, 'stereo_image_proc.launch.py')),),
-
-        Node(
-            condition=IfCondition(use_rviz),
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', rviz_config_file],
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}],
-            remappings=[('/tf', 'tf'),
-                        ('/tf_static', 'tf_static')])
+        # Start Nodes and Launch files
+        start_locomotion_cmd,
+        start_simulation_cmd,
+        start_stereo_image_proc_cmd,
+        rviz_cmd,
     ])

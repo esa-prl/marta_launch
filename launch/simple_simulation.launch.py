@@ -21,7 +21,6 @@ def generate_launch_description():
     rover_config_dir = os.path.join(get_package_share_directory('rover_config'))
 
     # Launch configurations
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
@@ -38,11 +37,6 @@ def generate_launch_description():
     urdf_model_path, robot_desc = to_urdf(xacro_model_path)
 
     # Launch declarations
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Top-level namespace')
-
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='False',
@@ -80,16 +74,47 @@ def generate_launch_description():
 
     configured_params = RewrittenYaml(
         source_file=config_file,
-        root_key=namespace,
+        root_key='',
         param_rewrites=param_substitutions,
         convert_types=True)
 
+    # Create Node Commands
+    start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'locomotion.launch.py')))
+
+    joint_state_pub_cmd = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher_node',
+        output='screen',
+        parameters=[configured_params]
+    )
+
+    simple_joint_sim_cmd = Node(
+        package='simple_joint_simulation',
+        executable='simple_joint_simulation_node',
+        name='simple_joint_simulation_node',
+        output='screen',
+        parameters=[configured_params]
+    )
+
+    rviz_cmd = Node(
+        condition=IfCondition(use_rviz),
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_config_file],
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+        remappings=[('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')])
     return LaunchDescription([
-        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
         # Parameter Declarations
-        declare_namespace_cmd,
         declare_use_sim_time_cmd,
         declare_config_file_cmd,
         declare_robot_description_cmd,
@@ -97,37 +122,9 @@ def generate_launch_description():
         declare_use_rviz_cmd,
         declare_urdf_path_cmd,
 
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-                                 launch_arguments={
-                                     'namespace': namespace,
-                                     'use_sim_time': use_sim_time,
-                                     'config_file': config_file,
-                                     'robot_description': robot_description
-                                 }.items()),
-
-        Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher_node',
-            output='screen',
-            parameters=[configured_params]
-        ),
-        Node(
-            package='simple_joint_simulation',
-            executable='simple_joint_simulation_node',
-            name='simple_joint_simulation_node',
-            output='screen',
-            parameters=[configured_params]
-        ),
-        Node(
-            condition=IfCondition(use_rviz),
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', rviz_config_file],
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}],
-            remappings=[('/tf', 'tf'),
-                        ('/tf_static', 'tf_static')])
+        # Start Nodes
+        start_locomotion_cmd,
+        joint_state_pub_cmd,
+        simple_joint_sim_cmd,
+        rviz_cmd
     ])

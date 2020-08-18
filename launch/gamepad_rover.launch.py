@@ -19,7 +19,6 @@ def generate_launch_description():
     rover_config_dir = get_package_share_directory('rover_config')
 
     # Launch configurations
-    namespace = LaunchConfiguration('namespace')
     config_file = LaunchConfiguration('config_file')
     robot_description = LaunchConfiguration('robot_description')
     rviz_config_file = LaunchConfiguration('rviz_config_file')
@@ -36,11 +35,6 @@ def generate_launch_description():
     urdf_model_path, robot_desc = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
 
     # Launch declarations
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Top-level namespace')
-
     declare_config_file_cmd = DeclareLaunchArgument(
         'config_file',
         default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
@@ -58,7 +52,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config_file',
-        default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_sim.rviz'),
+        default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_rover.rviz'),
         description='Full path to the RVIZ config file to use')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
@@ -66,37 +60,38 @@ def generate_launch_description():
         default_value='True',
         description='Whether to start RVIZ')
 
-    return LaunchDescription([
-        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        # SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+    start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'locomotion.launch.py')))
 
-        # Parameter Declarations
-        declare_namespace_cmd,
-        declare_config_file_cmd,
-        declare_robot_description_cmd,
-        declare_rviz_config_file_cmd,
-        declare_urdf_path_cmd,
-        declare_use_rviz_cmd,
+    start_pd_driver_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'platform_driver_ethercat.launch.py')))
 
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'platform_driver_ethercat.launch.py'))),
-
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-                                 launch_arguments={
-                                     'namespace': namespace,
-                                     'config_file': config_file,
-                                     'robot_description': robot_description
-                                 }.items()),
-
-        Node(
+    rviz_cmd = Node(
             condition=IfCondition(use_rviz),
             package='rviz2',
             executable='rviz2',
             name='rviz2',
             arguments=['-d', rviz_config_file],
             output='screen',
-            parameters=[{'use_sim_time': False}],
             remappings=[('/tf', 'tf'),
                         ('/tf_static', 'tf_static')])
+
+    return LaunchDescription([
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
+
+        # Parameter Declarations
+        declare_config_file_cmd,
+        declare_robot_description_cmd,
+        declare_rviz_config_file_cmd,
+        declare_urdf_path_cmd,
+        declare_use_rviz_cmd,
+
+        # Start Launch Files
+        start_locomotion_cmd,
+        start_pd_driver_cmd,
+
+        rviz_cmd,
     ])

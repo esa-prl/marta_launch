@@ -116,16 +116,10 @@ def generate_launch_description():
 
     # Specify the actions
     locomotion_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-        launch_arguments={'namespace': namespace,
-                          'use_sim_time': use_sim_time}.items())
+        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'locomotion.launch.py')))
 
     simulation_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'simulation.launch.py')),
-        launch_arguments={'namespace': namespace,
-                          'use_sim_time': use_sim_time,
-                          'use_simulator': use_simulator,
-                          'use_gazebo_gui': use_gazebo_gui}.items())
+        PythonLaunchDescriptionSource(os.path.join(marta_launch_dir, 'simulation.launch.py')))
 
     # Start Nav2 Stack
     bringup_cmd = IncludeLaunchDescription(
@@ -144,8 +138,6 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         arguments=['-d', rviz_config_file],
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static'),
                     ('goal_pose', 'goal_pose'),
@@ -158,31 +150,29 @@ def generate_launch_description():
             on_exit=EmitEvent(event=Shutdown(reason='rviz exited'))))
 
     # Create the launch description and populate
-    ld = LaunchDescription()
+    return LaunchDescription([
+        # Declare the launch options
+        declare_namespace_cmd,
+        declare_use_sim_time_cmd,
+        declare_map_yaml_cmd,
+        declare_params_file_cmd,
+        declare_bt_xml_cmd,
+        declare_autostart_cmd,
 
-    # Declare the launch options
-    ld.add_action(declare_namespace_cmd)
-    ld.add_action(declare_use_sim_time_cmd)
-    ld.add_action(declare_map_yaml_cmd)
-    ld.add_action(declare_params_file_cmd)
-    ld.add_action(declare_bt_xml_cmd)
-    ld.add_action(declare_autostart_cmd)
+        declare_rviz_config_file_cmd,
+        declare_use_simulator_cmd,
+        declare_use_rviz_cmd,
+        declare_use_gazebo_gui_cmd,
+        declare_world_cmd,
 
-    ld.add_action(declare_rviz_config_file_cmd)
-    ld.add_action(declare_use_simulator_cmd)
-    ld.add_action(declare_use_rviz_cmd)
-    ld.add_action(declare_use_gazebo_gui_cmd)
-    ld.add_action(declare_world_cmd)
+        # Add any conditioned actions
+        start_rviz_cmd,
 
-    # Add any conditioned actions
-    ld.add_action(start_rviz_cmd)
+        # Add other nodes and processes we need
+        exit_event_handler,
 
-    # Add other nodes and processes we need
-    ld.add_action(exit_event_handler)
-
-    # Add the actions to launch all of the navigation nodes
-    ld.add_action(locomotion_cmd)
-    ld.add_action(simulation_cmd)
-    ld.add_action(bringup_cmd)
-
-    return ld
+        # Add the actions to launch all of the navigation nodes
+        locomotion_cmd,
+        simulation_cmd,
+        bringup_cmd
+    ])
