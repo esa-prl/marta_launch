@@ -52,7 +52,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config_file',
-        default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_sim.rviz'),
+        default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_rover.rviz'),
         description='Full path to the RVIZ config file to use')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
@@ -63,8 +63,8 @@ def generate_launch_description():
     start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(marta_launch_dir, 'locomotion.launch.py')))
 
-    start_simulation_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'simulation.launch.py')))
+    start_pd_driver_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'platform_driver_ethercat.launch.py')))
 
     rviz_cmd = Node(
             condition=IfCondition(use_rviz),
@@ -89,7 +89,7 @@ def generate_launch_description():
 
         # Start Launch Files
         start_locomotion_cmd,
-        start_simulation_cmd,
+        start_pd_driver_cmd,
 
         rviz_cmd,
     ])

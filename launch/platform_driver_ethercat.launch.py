@@ -16,7 +16,7 @@ def generate_launch_description():
     pd_config_dir = os.path.join(get_package_share_directory('platform_driver_ethercat_ros2'), 'config')
 
     # Launch configurations
-    pd_config_file_name = LaunchConfiguration('pd_config_file_name')
+    pd_config_file_path = LaunchConfiguration('pd_config_file_path')
 
     # Launch declarations
     declare_pd_config_file_path_cmd = DeclareLaunchArgument(
@@ -32,7 +32,7 @@ def generate_launch_description():
             name = 'platform_driver_ethercat_node',
             output = 'screen',
             # arguments = ['--ros-args', '--log-level', 'debug'],
-            parameters = [{'config_file': pd_config_file_name}]
+            parameters = [{'config_file': pd_config_file_path}]
     )
 
     # Make the pd node take the 'configure' transition
