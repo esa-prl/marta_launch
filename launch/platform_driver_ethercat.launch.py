@@ -8,7 +8,7 @@ import lifecycle_msgs
 
 from launch import LaunchDescription
 
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
@@ -30,8 +30,6 @@ def generate_launch_description():
             package = 'platform_driver_ethercat_ros2',
             executable = 'platform_driver_ethercat_node',
             name = 'platform_driver_ethercat_node',
-            output = 'screen',
-            # arguments = ['--ros-args', '--log-level', 'debug'],
             parameters = [{'config_file': pd_config_file_path}]
     )
 
@@ -62,6 +60,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
+
         declare_pd_config_file_path_cmd,
         pd_inactive_state_handler,
         pd_node,

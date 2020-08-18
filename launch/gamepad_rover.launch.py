@@ -77,8 +77,10 @@ def generate_launch_description():
                         ('/tf_static', 'tf_static')])
 
     return LaunchDescription([
-        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        # SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
         # Parameter Declarations
         declare_config_file_cmd,
