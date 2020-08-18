@@ -83,6 +83,22 @@ def generate_launch_description():
         default_value=os.path.join(rover_config_dir, 'worlds', 'mars_yard.world'),
         description='Full path to world model file to load.')
 
+    start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'locomotion.launch.py')))
+
+    start_simulation_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'simulation.launch.py')))
+
+    rviz_cmd = Node(
+            condition=IfCondition(use_rviz),
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            arguments=['-d', rviz_config_file],
+            output='screen',
+            remappings=[('/tf', 'tf'),
+                        ('/tf_static', 'tf_static')])
+
     return LaunchDescription([
         # Set env var to print messages to stdout immediately
         SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
@@ -100,19 +116,9 @@ def generate_launch_description():
         declare_use_gazebo_gui_cmd,
         declare_world_path_cmd,
 
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'locomotion.launch.py'))),
+        # Start Launch Files
+        start_locomotion_cmd,
+        start_simulation_cmd,
 
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'simulation.launch.py'))),
-
-        Node(
-            condition=IfCondition(use_rviz),
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', rviz_config_file],
-            output='screen',
-            remappings=[('/tf', 'tf'),
-                        ('/tf_static', 'tf_static')])
+        rviz_cmd,
     ])
