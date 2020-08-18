@@ -106,21 +106,21 @@ def generate_launch_description():
     ])
 
     # Create the launch description and populate
-    ld = LaunchDescription()
+    return LaunchDescription([
+        # Set env var to print messages to stdout immediately
+        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
-    # Set environment variables
-    ld.add_action(stdout_linebuf_envvar)
+        # Declare the launch options
+        declare_namespace_cmd,
+        declare_use_namespace_cmd,
+        declare_map_yaml_cmd,
+        declare_use_sim_time_cmd,
+        declare_params_file_cmd,
+        declare_autostart_cmd,
+        declare_bt_xml_cmd,
 
-    # Declare the launch options
-    ld.add_action(declare_namespace_cmd)
-    ld.add_action(declare_use_namespace_cmd)
-    ld.add_action(declare_map_yaml_cmd)
-    ld.add_action(declare_use_sim_time_cmd)
-    ld.add_action(declare_params_file_cmd)
-    ld.add_action(declare_autostart_cmd)
-    ld.add_action(declare_bt_xml_cmd)
-
-    # Add the actions to launch all of the navigation nodes
-    ld.add_action(bringup_cmd_group)
-
-    return ld
+        # Add the actions to launch all of the navigation nodes
+        bringup_cmd_group
+    ])

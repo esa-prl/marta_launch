@@ -78,6 +78,10 @@ def generate_launch_description():
         param_rewrites=param_substitutions,
         convert_types=True)
 
+    # Create Node Commands
+    start_locomotion_cmd = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            os.path.join(marta_launch_dir, 'locomotion.launch.py')))
+
     return LaunchDescription([
         # Set env var to print messages to stdout immediately
         SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
@@ -92,14 +96,7 @@ def generate_launch_description():
         declare_use_rviz_cmd,
         declare_urdf_path_cmd,
 
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(
-            os.path.join(marta_launch_dir, 'locomotion.launch.py')),
-                                 launch_arguments={
-                                     'namespace': namespace,
-                                     'use_sim_time': use_sim_time,
-                                     'config_file': config_file,
-                                     'robot_description': robot_description
-                                 }.items()),
+        start_locomotion_cmd,
 
         Node(
             package='joint_state_publisher',
