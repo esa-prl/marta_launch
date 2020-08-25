@@ -129,8 +129,6 @@ def generate_launch_description():
                                  parameters=[{'use_sim_time': use_sim_time}])
 
     return LaunchDescription([
-        # Set env var to print messages to stdout immediately
-        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
         # Set env var to print messages colored. The ANSI color codes will appear in a log.
         SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
