@@ -121,8 +121,8 @@ def generate_launch_description():
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static')])
     return LaunchDescription([
-        # This makes the outpus appearing but WARN and ERROR are not printed YLW and RED
-        SetEnvironmentVariable('RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
         # Parameter Declarations
         declare_use_sim_time_cmd,

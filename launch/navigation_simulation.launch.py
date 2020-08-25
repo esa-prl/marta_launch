@@ -151,6 +151,9 @@ def generate_launch_description():
 
     # Create the launch description and populate
     return LaunchDescription([
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
+
         # Declare the launch options
         declare_namespace_cmd,
         declare_use_sim_time_cmd,
