@@ -21,9 +21,8 @@ def generate_launch_description():
     # Launch declarations
     declare_pd_config_file_path_cmd = DeclareLaunchArgument(
         'pd_config_file_path',
-        default_value=os.path.join(pd_config_dir, 'marta.yaml'),
-        description='Full path to the ROS2 parameters file to use for all launched nodes.')
-
+        default_value=os.path.join(pd_config_dir, 'pd_marta.yaml'),
+        description='Full path to the platform_driver_ethercat_ros2 config file')
 
     # Create pd node
     pd_node = launch_ros.actions.LifecycleNode(
