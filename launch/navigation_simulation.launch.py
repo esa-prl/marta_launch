@@ -20,7 +20,8 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, EmitEvent,
-                            IncludeLaunchDescription, RegisterEventHandler)
+                            IncludeLaunchDescription, RegisterEventHandler,
+                            SetEnvironmentVariable)
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
@@ -48,7 +49,7 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration('use_rviz')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
-    world = LaunchConfiguration('world')
+    world_path = LaunchConfiguration('world_path')
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -103,8 +104,8 @@ def generate_launch_description():
         default_value='True',
         description='Whether to start RVIZ')
 
-    declare_world_cmd = DeclareLaunchArgument(
-        'world',
+    declare_world_path_cmd = DeclareLaunchArgument(
+        'world_path',
         # TODO(orduno) Switch back once ROS argument passing has been fixed upstream
         #              https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/91
 
@@ -166,7 +167,7 @@ def generate_launch_description():
         declare_use_simulator_cmd,
         declare_use_rviz_cmd,
         declare_use_gazebo_gui_cmd,
-        declare_world_cmd,
+        declare_world_path_cmd,
 
         # Add any conditioned actions
         start_rviz_cmd,
