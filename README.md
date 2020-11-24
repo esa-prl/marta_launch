@@ -55,19 +55,18 @@ You can check the configration arguments of a launch file with the following com
 	ros2 launch marta_launch [FILE_NAME].launch.py -s
 
 ### Master Launch Files
-The launch files can be launched in isolation and should deliver the described functionallity.
+The launch files can be launched in isolation and should deliver the described functionality.
+
+* **gamepad_rover.launch.py:** Launches the platform driver together with RVIZ2 to control MaRTA by gamepad. Needs to be run in a root shell (`sudo -sE`).
+
+* **gamepad_simulation.launch.py:** Launches MaRTA in an empty gazebo world ready to be controlled by a gamepad.
 
 * **navigation_simulation.launch.py:** Launches MaRTA together with the [navigation stack](https://navigation.ros.org/) and GUI in RVIZ which allows to set waypoints.
-
-* **gamepad_simulation.launch.py:**  Launches MaRTA in an empty gazebo world ready to be controlled by a gamepad.
 
 * **simple_simulation.launch.py** Launches MaRTA as a visualization of the robot in RVIZ2.
 
 ### Sub Launch Files
 These launch files contain nodes that are commonly launch together. They are not intended to be launched alone, but to be instead included in master launch files.
-
-
-* **simulation.launch.py** Launches the simulation only.
 
 * **locomotion.launch.py** Launches all locomotion control nodes including the gamepad.
 
@@ -75,9 +74,11 @@ These launch files contain nodes that are commonly launch together. They are not
 
 * **nav2_navigation_launch.py** Launches navigation nodes of nav2.
 
-* **nav2_localization_launch.py** Launches localization nodes of na2.
+* **nav2_localization_launch.py** Launches localization nodes of nav2.
 
+* **platform_driver_ethercat.launch.py** Launches the platform driver node and brings it to active state. Needs to be run in a root shell (`sudo -sE`).
 
+* **simulation.launch.py** Launches the simulation only.
 
 ## Bugs & Feature Requests
 
