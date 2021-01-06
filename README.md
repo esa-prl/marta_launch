@@ -61,7 +61,7 @@ The launch files can be launched in isolation and should deliver the described f
 
 * **gamepad_simulation.launch.py:** Launches MaRTA in an empty gazebo world ready to be controlled by a gamepad.
 
-* **navigation_simulation.launch.py:** Launches MaRTA together with the [navigation stack](https://navigation.ros.org/) and GUI in RVIZ which allows to set waypoints.
+* **navigation_simulation.launch.py:** Launches MaRTA together with the [navigation stack](https://navigation.ros.org/) and GUI in RVIZ, which allows to set waypoints. Make sure to switch the locomotion_mode to somple_rover_locomotion with a physical gamepad or the [gamepad_emulation](https://github.com/esa-prl/gamepad_emulation).
 
 * **simple_simulation.launch.py** Launches MaRTA as a visualization of the robot in RVIZ2.
 
