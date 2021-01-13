@@ -138,6 +138,11 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         name='rviz2',
+        # Use this option to see all output from rviz:
+        # output='screen',
+        # Use this option to supress messages of missing tfs,
+        # at startup of rviz and gazebo:
+        output={'stdout':'log'},
         arguments=['-d', rviz_config_file],
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static'),
