@@ -27,7 +27,7 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration('use_rviz')
     use_simulator = LaunchConfiguration('use_simulator')
     use_gazebo_gui = LaunchConfiguration('use_gazebo_gui')
-    world = LaunchConfiguration('world')
+    world_path = LaunchConfiguration('world_path')
     use_loc_cam = LaunchConfiguration('use_loc_cam')
     stereo_cam_name = LaunchConfiguration('stereo_cam_name')
     use_stereo_view = LaunchConfiguration('use_stereo_view')
@@ -38,53 +38,53 @@ def generate_launch_description():
     xacro_model_path = os.path.join(rover_config_dir, 'urdf', xacro_model_name)
 
     # Parse XACRO file to URDF
-    urdf_model_path = to_urdf(xacro_model_path)
+    urdf_model_path, robot_desc = to_urdf(xacro_model_path, mappings={'use_ptu': 'true'})
 
     # Launch declarations
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='False',
-        description='Use simulation (Gazebo) clock if true')
+        default_value='True',
+        description='Use simulation (Gazebo) clock if true.')
 
     declare_config_file_cmd = DeclareLaunchArgument(
         'config_file',
         default_value=os.path.join(rover_config_dir, 'config', 'marta.yaml'),
-        description='Full path to the ROS2 parameters file to use for all launched nodes')
+        description='Full path to the ROS2 parameters file to use for all launched nodes.')
+
+    declare_urdf_path_cmd = DeclareLaunchArgument(
+        'urdf_path',
+        default_value=urdf_model_path,
+        description='Full path to robot urdf file.')
 
     declare_robot_description_cmd = DeclareLaunchArgument(
         'robot_description',
-        default_value=urdf_model_path,
+        default_value=robot_desc,
         description='Full path to robot urdf file.')
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config_file',
         default_value=os.path.join(rover_config_dir, 'rviz', 'gamepad_sim.rviz'),
-        description='Full path to the RVIZ config file to use')
+        description='Full path to the RVIZ config file to use.')
 
     declare_use_rviz_cmd = DeclareLaunchArgument(
         'use_rviz',
         default_value='True',
-        description='Whether to start RVIZ')
+        description='Whether to start RVIZ.')
 
     declare_use_simulator_cmd = DeclareLaunchArgument(
         'use_simulator',
         default_value='True',
-        description='Whether to start the simulator')
+        description='Whether to start the simulator.')
 
     declare_use_gazebo_gui_cmd = DeclareLaunchArgument(
         'use_gazebo_gui',
         default_value='True',
-        description='Whether to execute gzclient)')
+        description='Whether to execute gazebo gui (gzclient).')
 
-    declare_world_cmd = DeclareLaunchArgument(
-        'world',
-        # TODO(orduno) Switch back once ROS argument passing has been fixed upstream
-        #              https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/91
-        # EMPTY WORLD
-        # default_value=os.path.join(rover_config_dir, 'worlds', 'empty.world'),
-        # MARS YARD
+    declare_world_path_cmd = DeclareLaunchArgument(
+        'world_path',
         default_value=os.path.join(rover_config_dir, 'worlds', 'mars_yard.world'),
-        description='Full path to world model file to load')
+        description='Full path to world model file to load.')
 
     declare_use_loc_cam_cmd = DeclareLaunchArgument(
         'use_loc_cam',
@@ -116,10 +116,24 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         arguments=['-d', rviz_config_file],
-        output='screen',
+        output={'stdout': 'log'},
+        # output='screen',
         parameters=[{'use_sim_time': use_sim_time}],
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static')])
+
+    # rqt_cmd = Node(
+    #     # condition=IfCondition(use_rviz),
+    #     package='rqt_reconfigure',
+    #     executable='rqt_reconfigure',
+    #     name='rqt',
+    #     # output={'stdout': 'log'},
+    #     output='screen'
+    #     # parameters=[{'use_sim_time': use_sim_time}],
+    #     # remappings=[('/tf', 'tf'),
+    #                 # ('/tf_static', 'tf_static')])           
+    # )
+
     return LaunchDescription([
         # Set env var to print messages colored. The ANSI color codes will appear in a log.
         SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
@@ -129,10 +143,11 @@ def generate_launch_description():
         declare_config_file_cmd,
         declare_robot_description_cmd,
         declare_rviz_config_file_cmd,
+        declare_urdf_path_cmd,
         declare_use_rviz_cmd,
         declare_use_simulator_cmd,
         declare_use_gazebo_gui_cmd,
-        declare_world_cmd,
+        declare_world_path_cmd,
         declare_use_loc_cam_cmd,
         declare_stereo_cam_name_cmd,
         declare_use_stereo_view_cmd,
@@ -140,6 +155,8 @@ def generate_launch_description():
         # Start Nodes and Launch files
         start_locomotion_cmd,
         start_simulation_cmd,
+        
         start_stereo_image_proc_cmd,
         rviz_cmd,
+        # rqt_cmd,
     ])

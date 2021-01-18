@@ -32,17 +32,78 @@
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
+from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
+from launch.conditions import LaunchConfigurationEquals
+from launch.conditions import LaunchConfigurationNotEquals
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
+
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # TODO(jacobperron): Include image_proc launch file when it exists
+
+    # Launch configurations
     stereo_cam_name = LaunchConfiguration('stereo_cam_name')
-    use_stereo_view = LaunchConfiguration('use_stereo_view')
+
+    composable_nodes = [
+        ComposableNode(
+            package='stereo_image_proc',
+            plugin='stereo_image_proc::DisparityNode',
+            parameters=[{
+                'approximate_sync': LaunchConfiguration('approximate_sync'),
+                'use_system_default_qos': LaunchConfiguration('use_system_default_qos'),
+                'stereo_algorithm': LaunchConfiguration('stereo_algorithm'),
+                'prefilter_size': LaunchConfiguration('prefilter_size'),
+                'prefilter_cap': LaunchConfiguration('prefilter_cap'),
+                'correlation_window_size': LaunchConfiguration('correlation_window_size'),
+                'min_disparity': LaunchConfiguration('min_disparity'),
+                'disparity_range': LaunchConfiguration('disparity_range'),
+                'texture_threshold': LaunchConfiguration('texture_threshold'),
+                'speckle_size': LaunchConfiguration('speckle_size'),
+                'speckle_range': LaunchConfiguration('speckle_range'),
+                'disp12_max_diff': LaunchConfiguration('disp12_max_diff'),
+                'uniqueness_ratio': LaunchConfiguration('uniqueness_ratio'),
+                'P1': LaunchConfiguration('P1'),
+                'P2': LaunchConfiguration('P2'),
+                'full_dp': LaunchConfiguration('full_dp'),
+            }],
+            remappings=[
+                ('left/image_rect',  [stereo_cam_name, '/left/image_rect']),
+                ('left/camera_info', [stereo_cam_name, '/left/camera_info']),
+                ('right/image_rect', [stereo_cam_name, '/right/image_rect']),
+                ('right/camera_info', [stereo_cam_name, '/right/camera_info']),
+                ('disparity', [stereo_cam_name, '/disparity']),
+            ]
+        ),
+        ComposableNode(
+            package='stereo_image_proc',
+            plugin='stereo_image_proc::PointCloudNode',
+            parameters=[{
+                'approximate_sync': LaunchConfiguration('approximate_sync'),
+                'avoid_point_cloud_padding': LaunchConfiguration('avoid_point_cloud_padding'),
+                'use_system_default_qos': LaunchConfiguration('use_system_default_qos'),
+            }],
+            remappings=[
+                ('left/camera_info', [stereo_cam_name, '/left/camera_info']),
+                ('right/camera_info', [stereo_cam_name, '/right/camera_info']),
+                (
+                    'left/image_rect_color',
+                    [stereo_cam_name, '/left/image_rect_color']
+                ),
+                ('points2', [stereo_cam_name, '/pointcloud']),
+                ('disparity', [stereo_cam_name, '/disparity']),
+            ]
+        ),
+    ]
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -51,66 +112,152 @@ def generate_launch_description():
                         'the left and right cameras do not produce exactly synced timestamps.'
         ),
         DeclareLaunchArgument(
-            name='use_system_default_qos', default_value='False',
+            name='avoid_point_cloud_padding', default_value='True',
+            description='Avoid alignment padding in the generated point cloud.'
+                        'This reduces bandwidth requirements, as the point cloud size is halved.'
+                        'Using point clouds without alignment padding might degrade performance '
+                        'for some algorithms.'
+        ),
+        DeclareLaunchArgument(
+            name='use_system_default_qos', default_value='True',
             description='Use the RMW QoS settings for the image and camera info subscriptions.'
         ),
         DeclareLaunchArgument(
-            name='stereo_cam_name', default_value='/camera',
-            description='Namespace'
+            name='launch_image_proc', default_value='True',
+            description='Whether to launch debayer and rectify nodes from image_proc.'
         ),
-
         DeclareLaunchArgument(
-            name='use_stereo_view', default_value='True',
-            description='Choice if stereo_view should be started.'
+            name='left_namespace', default_value='loc_cam/left',
+            description='Namespace for the left camera'
         ),
-
+        DeclareLaunchArgument(
+            name='right_namespace', default_value='loc_cam/right',
+            description='Namespace for the right camera'
+        ),
+        DeclareLaunchArgument(
+            name='container', default_value='',
+            description=(
+                'Name of an existing node container to load launched nodes into. '
+                'If unset, a new container will be created.'
+            )
+        ),
+        # Stereo algorithm parameters
+        DeclareLaunchArgument(
+            name='stereo_algorithm', default_value='0',
+            description='Stereo algorithm: Block Matching (0) or Semi-Global Block Matching (1)'
+        ),
+        DeclareLaunchArgument(
+            name='prefilter_size', default_value='9',
+            description='Normalization window size in pixels (must be odd)'
+        ),
+        DeclareLaunchArgument(
+            name='prefilter_cap', default_value='31',
+            description='Bound on normalized pixel values'
+        ),
+        DeclareLaunchArgument(
+            name='correlation_window_size', default_value='15',
+            description='SAD correlation window width in pixels (must be odd)'
+        ),
+        DeclareLaunchArgument(
+            name='min_disparity', default_value='0',
+            description='Disparity to begin search at in pixels'
+        ),
+        DeclareLaunchArgument(
+            name='disparity_range', default_value='64',
+            description='Number of disparities to search in pixels (must be a multiple of 16)'
+        ),
+        DeclareLaunchArgument(
+            name='texture_threshold', default_value='10',
+            description='Filter out if SAD window response does not exceed texture threshold'
+        ),
+        DeclareLaunchArgument(
+            name='speckle_size', default_value='100',
+            description='Reject regions smaller than this size in pixels'
+        ),
+        DeclareLaunchArgument(
+            name='speckle_range', default_value='4',
+            description='Maximum allowed difference between detected disparities'
+        ),
+        DeclareLaunchArgument(
+            name='disp12_max_diff', default_value='0',
+            description='Maximum allowed difference in the left-right disparity check in pixels '
+                        '(Semi-Global Block Matching only)'
+        ),
+        DeclareLaunchArgument(
+            name='uniqueness_ratio', default_value='15.0',
+            description='Filter out if best match does not sufficiently exceed the next-best match'
+        ),
+        DeclareLaunchArgument(
+            name='P1', default_value='200.0',
+            description='The first parameter ccontrolling the disparity smoothness '
+                        '(Semi-Global Block Matching only)'
+        ),
+        DeclareLaunchArgument(
+            name='P2', default_value='400.0',
+            description='The second parameter ccontrolling the disparity smoothness '
+                        '(Semi-Global Block Matching only)'
+        ),
+        DeclareLaunchArgument(
+            name='full_dp', default_value='False',
+            description='Run the full variant of the algorithm (Semi-Global Block Matching only)'
+        ),
         ComposableNodeContainer(
-            package='rclcpp_components', executable='component_container',
-            name='stereo_image_proc_container', namespace='',
-            composable_node_descriptions=[
-                ComposableNode(
-                    package='stereo_image_proc',
-                    node_plugin='stereo_image_proc::DisparityNode',
-                    name='disparity_node',
-                    namespace=stereo_cam_name,
-                    remappings=[
-                        ('left/image_rect', 'left/image_raw'),
-                        ('right/image_rect', 'right/image_raw'),
-                    ],
-                    parameters=[{
-                        'approximate_sync': LaunchConfiguration('approximate_sync'),
-                        'use_system_default_qos': LaunchConfiguration('use_system_default_qos'),
-                    }]
-                ),
-                ComposableNode(
-                    package='stereo_image_proc',
-                    node_plugin='stereo_image_proc::PointCloudNode',
-                    name='point_cloud_node',
-                    namespace=stereo_cam_name,
-                    remappings=[
-                        ('left/image_rect_color', 'left/image_raw')
-                    ],
-                    parameters=[{
-                        'approximate_sync': LaunchConfiguration('approximate_sync'),
-                        'use_system_default_qos': LaunchConfiguration('use_system_default_qos'),
-                    }]
+            condition=LaunchConfigurationEquals('container', ''),
+            package='rclcpp_components',
+            executable='component_container',
+            name='stereo_image_proc_container',
+            output='screen',
+            namespace='',
+            composable_node_descriptions=composable_nodes,
+        ),
+        LoadComposableNodes(
+            condition=LaunchConfigurationNotEquals('container', ''),
+            composable_node_descriptions=composable_nodes,
+            target_container=LaunchConfiguration('container'),
+        ),
+        # If a container name is not provided,
+        # set the name of the container launched above for image_proc nodes
+        SetLaunchConfiguration(
+            condition=LaunchConfigurationEquals('container', ''),
+            name='container',
+            value='stereo_image_proc_container'
+        ),
+        GroupAction(
+            [
+                PushRosNamespace(LaunchConfiguration('left_namespace')),
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        FindPackageShare('image_proc'), '/launch/image_proc.launch.py'
+                    ]),
+                    launch_arguments={'container': LaunchConfiguration('container')}.items()
                 ),
             ],
+            condition=IfCondition(LaunchConfiguration('launch_image_proc')),
+        ),
+        GroupAction(
+            [
+                PushRosNamespace(LaunchConfiguration('right_namespace')),
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        FindPackageShare('image_proc'), '/launch/image_proc.launch.py'
+                    ]),
+                    launch_arguments={'container': LaunchConfiguration('container')}.items()
+                ),
+            ],
+            condition=IfCondition(LaunchConfiguration('launch_image_proc')),
         ),
 
         Node(
-            condition=IfCondition(use_stereo_view),
             package='image_view',
             executable='stereo_view',
             name='stereo_view_node',
             arguments=['raw'],
             remappings=[
-                    ('/stereo/disparity',   [stereo_cam_name, '/disparity']),
-                    ('/stereo/left/image',  [stereo_cam_name, '/left/image_raw']),
-                    ('/stereo/right/image', [stereo_cam_name, '/right/image_raw']),
+                    ('/stereo/disparity', [stereo_cam_name, '/disparity']),
+                    ('/stereo/left/image', [stereo_cam_name, '/left/image_rect']),
+                    ('/stereo/right/image', [stereo_cam_name, '/right/image_rect']),
             ],
             output='screen',
             emulate_tty=True
         ),
-
     ])
